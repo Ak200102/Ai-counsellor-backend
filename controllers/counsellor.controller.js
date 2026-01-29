@@ -52,61 +52,114 @@ export const aiCounsellor = async (req, res) => {
     
     let profile = {
       academic: "Not provided",
-      goal: "Not provided",
+      goal: "Not provided", 
       budget: "Not provided",
       exams: "Not provided",
-      internships: "Not provided"
+      experience: "Not provided",
+      applications: "Not provided",
+      universities: "Not provided"
     };
 
     let infoProvided = [];
 
     try {
       if (profileData) {
-        // Handle both simple string format and nested object format
-        if (typeof profileData.academic === 'string') {
-          profile.academic = profileData.academic;
-        } else if (profileData.academic) {
-          profile.academic = `${profileData.academic.level || ''} ${profileData.academic.major || ''}`.trim() || "Not provided";
-        }
-        if (profile.academic !== "Not provided") infoProvided.push("academic background");
-
-        if (typeof profileData.goal === 'string') {
-          profile.goal = profileData.goal;
-        } else if (profileData.studyGoal) {
-          profile.goal = `${profileData.studyGoal.degree || ''} in ${profileData.studyGoal.field || ''}`.trim() || "Not provided";
-        }
-        if (profile.goal !== "Not provided") infoProvided.push("study goals");
-
-        if (typeof profileData.budget === 'string') {
-          profile.budget = profileData.budget;
-        } else if (profileData.budget) {
-          profile.budget = `${profileData.budget.range || ''} (${profileData.budget.funding || ''})`.trim() || "Not provided";
-        }
-        if (profile.budget !== "Not provided") infoProvided.push("budget");
-
-        // Check for exams
-        if (profileData.exams) {
-          const examStatus = Object.values(profileData.exams).filter(v => v !== "Not Started").length > 0;
-          if (examStatus) {
-            profile.exams = JSON.stringify(profileData.exams);
-            infoProvided.push("exam status");
+        // 🎓 ACADEMIC BACKGROUND - Complete data
+        if (profileData.academic) {
+          const academic = profileData.academic;
+          profile.academic = `Level: ${academic.level || 'Not specified'}, Major: ${academic.major || 'Not specified'}, University: ${academic.university || 'Not specified'}, GPA: ${academic.gpa || 'Not specified'}, Graduation Year: ${academic.graduationYear || 'Not specified'}`;
+          if (academic.level || academic.major || academic.university || academic.gpa) {
+            infoProvided.push("academic background");
           }
         }
-
-        // Check for internships/projects
-        if (profileData.internships || profileData.projects) {
-          profile.internships = `Internships: ${profileData.internships || 'Not mentioned'}, Projects: ${profileData.projects || 'Not mentioned'}`;
-          if (profileData.internships || profileData.projects) {
-            infoProvided.push("internship and project experience");
+        
+        // 🎯 STUDY GOALS - Complete data
+        if (profileData.studyGoal) {
+          const studyGoal = profileData.studyGoal;
+          profile.goal = `Target Degree: ${studyGoal.degree || 'Not specified'}, Field: ${studyGoal.field || 'Not specified'}, Intake: ${studyGoal.intakeYear || 'Not specified'}, Countries: ${studyGoal.countries?.join(', ') || 'Not specified'}`;
+          if (studyGoal.degree || studyGoal.field || studyGoal.intakeYear || studyGoal.countries?.length > 0) {
+            infoProvided.push("study goals");
           }
         }
+        
+        // 💰 BUDGET - Complete data
+        if (profileData.budget) {
+          const budget = profileData.budget;
+          profile.budget = `Range: ${budget.range || 'Not specified'}, Funding: ${budget.funding || 'Not specified'}`;
+          if (budget.range || budget.funding) {
+            infoProvided.push("budget information");
+          }
+        }
+        
+        // 📝 STANDARDIZED TESTS - Complete data
+        const testScores = [];
+        if (profileData.ieltsTaken) {
+          testScores.push(`IELTS: ${profileData.ieltsScore?.overall || 'Not specified'}`);
+          infoProvided.push("IELTS score");
+        }
+        if (profileData.toeflTaken) {
+          testScores.push(`TOEFL: ${profileData.toeflScore?.total || 'Not specified'}`);
+          infoProvided.push("TOEFL score");
+        }
+        if (profileData.greTaken) {
+          testScores.push(`GRE: ${profileData.greScore?.total || 'Not specified'}`);
+          infoProvided.push("GRE score");
+        }
+        if (profileData.gmatTaken) {
+          testScores.push(`GMAT: ${profileData.gmatScore?.total || 'Not specified'}`);
+          infoProvided.push("GMAT score");
+        }
+        profile.exams = testScores.length > 0 ? testScores.join(', ') : "Not provided";
+        
+        // 📚 EXPERIENCE - Complete data
+        const experienceInfo = [];
+        if (profileData.workExperience) {
+          experienceInfo.push(`Work: ${profileData.workExperience}`);
+          infoProvided.push("work experience");
+        }
+        if (profileData.researchExperience) {
+          experienceInfo.push(`Research: ${profileData.researchExperience}`);
+          infoProvided.push("research experience");
+        }
+        if (profileData.publications) {
+          experienceInfo.push(`Publications: ${profileData.publications}`);
+          infoProvided.push("publications");
+        }
+        if (profileData.certifications) {
+          experienceInfo.push(`Certifications: ${profileData.certifications}`);
+          infoProvided.push("certifications");
+        }
+        profile.experience = experienceInfo.length > 0 ? experienceInfo.join(', ') : "Not provided";
+        
+        // 📄 APPLICATION READINESS - Complete data
+        const applicationStatus = [];
+        if (profileData.sopStatus) {
+          applicationStatus.push(`SOP: ${profileData.sopStatus}`);
+          infoProvided.push("SOP status");
+        }
+        if (profileData.lorStatus) {
+          applicationStatus.push(`LOR: ${profileData.lorStatus}`);
+          infoProvided.push("LOR status");
+        }
+        if (profileData.resumeStatus) {
+          applicationStatus.push(`Resume: ${profileData.resumeStatus}`);
+          infoProvided.push("Resume status");
+        }
+        profile.applications = applicationStatus.length > 0 ? applicationStatus.join(', ') : "Not provided";
+        
+        // 🏛️ UNIVERSITY STATUS - Complete data
+        const shortlistedCount = profileData.shortlistedUniversities?.length || 0;
+        const lockedUniversity = profileData.lockedUniversity?.universityId?.name || 'None';
+        profile.universities = `Shortlisted: ${shortlistedCount}, Locked: ${lockedUniversity}`;
+        if (shortlistedCount > 0 || lockedUniversity !== 'None') {
+          infoProvided.push("university status");
+        }
+        
+        console.log("Enhanced profile data:", profile);
+        console.log("Info provided:", infoProvided);
       }
-
-      console.log("Processed profile:", JSON.stringify(profile, null, 2));
-      console.log("Info provided:", infoProvided);
-    } catch (processingError) {
-      console.error("Error processing profile data:", processingError);
-      // Use default values if processing fails
+    } catch (profileError) {
+      console.error("Error processing profile data:", profileError);
     }
 
     const alreadyProvidedInfo = infoProvided.length > 0 

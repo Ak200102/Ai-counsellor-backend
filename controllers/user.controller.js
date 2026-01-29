@@ -334,61 +334,63 @@ export const updateUser = async (req, res) => {
       return countriesString.split(',').map(country => country.trim()).filter(country => country.length > 0);
     };
 
-    // Create clean profile data object matching onboarding structure
+    // Create profile data with nested structure to match database
     const profileData = {
-      userId: req.user._id,
-      bio: bio || profile.bio || "",
-      // Academic Background (matching onboarding structure)
-      degree: degree || profile.degree || "",
-      subject: subject || profile.subject || "",
-      university: university || profile.university || "",
-      graduationYear: graduationYear || profile.graduationYear || "",
-      gpa: gpa || profile.gpa || "",
-      // Study Goal (matching onboarding structure)
-      intendedDegree: intendedDegree || profile.intendedDegree || "",
-      fieldOfStudy: fieldOfStudy || profile.fieldOfStudy || "",
-      intakeYear: intakeYear || profile.intakeYear || "",
-      preferredCountries: Array.isArray(preferredCountries) ? preferredCountries : (profile.preferredCountries || []),
-      // Budget (matching onboarding structure)
-      budgetRange: budgetRange || profile.budgetRange || "",
-      fundingPlan: fundingPlan || profile.fundingPlan || "",
-      // Standardized Tests (matching onboarding structure)
+      // Academic Background - CONVERT FLAT TO NESTED
+      academic: {
+        level: degree || profile.academic?.level || "",
+        major: subject || profile.academic?.major || "",
+        university: university || profile.academic?.university || "",
+        graduationYear: graduationYear || profile.academic?.graduationYear || null,
+        gpa: gpa || profile.academic?.gpa || ""
+      },
+      // Study Goal - CONVERT FLAT TO NESTED
+      studyGoal: {
+        degree: intendedDegree || profile.studyGoal?.degree || "",
+        field: fieldOfStudy || profile.studyGoal?.field || "",
+        intakeYear: intakeYear || profile.studyGoal?.intakeYear || null,
+        countries: Array.isArray(preferredCountries) ? preferredCountries : (profile.studyGoal?.countries || [])
+      },
+      // Budget - CONVERT FLAT TO NESTED
+      budget: {
+        range: budgetRange || profile.budget?.range || "",
+        funding: fundingPlan || profile.budget?.funding || ""
+      },
+      // Standardized Tests - DIRECT STRUCTURE
       ieltsTaken: ieltsTaken !== undefined ? ieltsTaken : (profile.ieltsTaken || false),
-      ieltsScore: {
+      ieltsScore: ieltsScore ? {
         overall: ieltsScore || profile.ieltsScore?.overall || "",
         listening: profile.ieltsScore?.listening || "",
         reading: profile.ieltsScore?.reading || "",
         writing: profile.ieltsScore?.writing || "",
         speaking: profile.ieltsScore?.speaking || ""
-      },
+      } : profile.ieltsScore || {},
       toeflTaken: toeflTaken !== undefined ? toeflTaken : (profile.toeflTaken || false),
-      toeflScore: {
+      toeflScore: toeflScore ? {
         total: toeflScore || profile.toeflScore?.total || "",
         reading: profile.toeflScore?.reading || "",
         listening: profile.toeflScore?.listening || "",
         speaking: profile.toeflScore?.speaking || "",
         writing: profile.toeflScore?.writing || ""
-      },
+      } : profile.toeflScore || {},
       greTaken: greTaken !== undefined ? greTaken : (profile.greTaken || false),
-      greScore: {
+      greScore: greScore ? {
+        total: greScore || profile.greScore?.total || "",
         verbal: profile.greScore?.verbal || "",
-        quantitative: profile.greScore?.quantitative || "",
-        analytical: profile.greScore?.analytical || "",
-        total: greScore || profile.greScore?.total || ""
-      },
+        quantitative: profile.greScore?.quantitative || ""
+      } : profile.greScore || {},
       gmatTaken: gmatTaken !== undefined ? gmatTaken : (profile.gmatTaken || false),
-      gmatScore: {
+      gmatScore: gmatScore ? {
+        total: gmatScore || profile.gmatScore?.total || "",
         verbal: profile.gmatScore?.verbal || "",
-        quantitative: profile.gmatScore?.quantitative || "",
-        analytical: profile.gmatScore?.analytical || "",
-        total: gmatScore || profile.gmatScore?.total || ""
-      },
-      // Additional Academic Info (matching onboarding structure)
+        quantitative: profile.gmatScore?.quantitative || ""
+      } : profile.gmatScore || {},
+      // Additional Academic Info - DIRECT STRUCTURE
       workExperience: workExperience || profile.workExperience || "",
       researchExperience: researchExperience || profile.researchExperience || "",
       publications: publications || profile.publications || "",
       certifications: certifications || profile.certifications || "",
-      // Application Readiness (matching onboarding structure)
+      // Application Readiness - DIRECT STRUCTURE
       sopStatus: sopStatus || profile.sopStatus || "",
       lorStatus: lorStatus || profile.lorStatus || "",
       resumeStatus: resumeStatus || profile.resumeStatus || "",
@@ -398,7 +400,8 @@ export const updateUser = async (req, res) => {
       shortlistedUniversities: profile.shortlistedUniversities || [],
       lockedUniversity: profile.lockedUniversity || null,
       profileStrength: profile.profileStrength || {},
-      completionPercentage: profile.completionPercentage || 0
+      completionPercentage: profile.completionPercentage || 0,
+      bio: bio || profile.bio || ""
     };
 
     // Update profile with clean data
