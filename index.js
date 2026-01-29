@@ -5,6 +5,8 @@ import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import path from "path";
+import session from "express-session";
+import passport from "./config/googleAuth.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -16,6 +18,18 @@ import platformRoutes from "./routes/platform.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 
 const app = express();
+
+// Session middleware for passport
+app.use(session({
+  secret: process.env.JWT_SECRET || "your-secret-key",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // CORS configuration
 app.use(cors({

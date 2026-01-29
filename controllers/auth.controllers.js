@@ -10,6 +10,36 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// Google OAuth Success Handler
+export const googleAuthSuccess = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+
+    // Generate JWT token
+    const token = generateToken(req.user._id);
+
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const redirectUrl = `${frontendUrl}/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+    }))}`;
+    
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/auth/login?error=auth_failed`);
+  }
+};
+
+// Google OAuth Failure Handler
+export const googleAuthFailure = (req, res) => {
+  res.status(401).json({ message: "Google authentication failed" });
+};
+
 // Request OTP for signup
 export const requestSignupOTP = async (req, res) => {
   try {
