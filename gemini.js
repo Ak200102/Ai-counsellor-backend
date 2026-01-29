@@ -178,6 +178,26 @@ const geminiResponse = async (context) => {
       : "";
 
     const prompt = `
+🚨 CRITICAL RULE - NO COLLEGE RECOMMENDATIONS FOR GENERAL QUESTIONS 🚨
+DO NOT show college recommendation cards for:
+- Profile questions ("How is my profile?")
+- Interview preparation 
+- Scholarship advice
+- Visa guidance
+- Career guidance
+- Study tips
+- Personal development
+- ANY question that doesn't explicitly ask for college/university recommendations
+
+ONLY show college recommendations when user says:
+- "recommend colleges"
+- "suggest universities" 
+- "what colleges should I apply to"
+- "show me universities for [field]"
+- Similar explicit college recommendation requests
+
+For ALL other questions: collegeRecommendations must be []
+
 You are an expert AI study abroad counsellor with complete memory of previous conversations. You remember everything the user has told you before and can reference it in your responses.
 
 CONVERSATION MEMORY & CONTEXT:
@@ -569,8 +589,9 @@ YOU MUST RETURN ONLY VALID JSON
     "readiness": "High | Medium | Low"
   },
   "collegeRecommendations": [
-    // ONLY include this array if user asked for college recommendations
-    // Otherwise set to: []
+    // IMPORTANT: ONLY include this array if user asked for college recommendations!
+    // For ALL other questions (profile, interview, scholarship, visa, career), set this to: []
+    // NO EXCEPTIONS!
     {
       "category": "DREAM",
       "name": "Specific University Name",
@@ -601,6 +622,43 @@ YOU MUST RETURN ONLY VALID JSON
       "name": "university name (only if action = AUTO_SHORTLIST_MULTIPLE)",
       "category": "DREAM | TARGET | SAFE"
     }
+  ]
+}
+
+────────────────────────────
+JSON EXAMPLES - FOLLOW THESE EXACTLY
+────────────────────────────
+
+EXAMPLE 1 - Profile Question ("How is my profile?"):
+{
+  "message": "Based on your profile, I can see you have...",
+  "profileAssessment": {"academics": "Strong", "internships": "Good", "readiness": "Medium"},
+  "collegeRecommendations": [],
+  "action": "CREATE_TASK",
+  "task": {"title": "Improve GRE Score", "reason": "To increase admission chances"}
+}
+
+EXAMPLE 2 - Interview Question ("How to prepare for interviews?"):
+{
+  "message": "Here are some interview preparation tips...",
+  "profileAssessment": {"academics": "Average", "internships": "Basic", "readiness": "Low"},
+  "collegeRecommendations": [],
+  "action": "CREATE_TASK",
+  "task": {"title": "Practice Mock Interviews", "reason": "To improve interview performance"}
+}
+
+EXAMPLE 3 - College Recommendation Question ("Suggest some colleges"):
+{
+  "message": "Based on your profile, here are some college recommendations...",
+  "profileAssessment": {"academics": "Strong", "internships": "Good", "readiness": "High"},
+  "collegeRecommendations": [
+    {"category": "DREAM", "name": "MIT", "country": "USA", "rank": "#1", "field": "Computer Science", "internshipScore": "High", "acceptanceProbability": "Low", "reason": "Perfect match for your CS interests and strong academic profile"},
+    {"category": "TARGET", "name": "University of Washington", "country": "USA", "rank": "#20-50", "field": "Computer Science", "internshipScore": "High", "acceptanceProbability": "Medium", "reason": "Strong CS program with good internship opportunities"}
+  ],
+  "action": "AUTO_SHORTLIST_MULTIPLE",
+  "autoShortlisted": [
+    {"name": "MIT", "category": "DREAM"},
+    {"name": "University of Washington", "category": "TARGET"}
   ]
 }
 
