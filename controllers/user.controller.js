@@ -204,43 +204,39 @@ export const updateUser = async (req, res) => {
     const { 
       name, 
       password, 
-      bio, 
-      targetCountry, 
-      studyLevel, 
-      budget, 
-      major, 
+      bio,
+      // Academic Background (matching onboarding structure)
+      degree,
+      subject,
+      university,
+      graduationYear,
+      gpa,
+      // Study Goal (matching onboarding structure)
+      intendedDegree,
       fieldOfStudy,
-      gpa, 
-      degree, 
-      field,
-      intendedMajor,
-      // Career Goals
-      shortTermGoals,
-      longTermGoals,
-      careerAspirations,
-      industryInterest,
-      sectorInterest,
-      jobRoleAspirations,
-      positionAspirations,
-      // Experience
-      workExperienceYears,
-      workExperienceDuration,
-      company,
-      position,
-      // Skills
-      technicalSkills,
-      allSkills,
-      // Exams
-      ieltsScore,
-      greScore,
-      toeflScore,
-      satScore,
-      // Budget Details
-      annualBudget,
-      totalBudget,
-      // Additional Countries
+      intakeYear,
       preferredCountries,
-      allCountries
+      // Budget (matching onboarding structure)
+      budgetRange,
+      fundingPlan,
+      // Standardized Tests (matching onboarding structure)
+      ieltsTaken,
+      ieltsScore,
+      toeflTaken,
+      toeflScore,
+      greTaken,
+      greScore,
+      gmatTaken,
+      gmatScore,
+      // Additional Academic Info (matching onboarding structure)
+      workExperience,
+      researchExperience,
+      publications,
+      certifications,
+      // Application Readiness (matching onboarding structure)
+      sopStatus,
+      lorStatus,
+      resumeStatus
     } = req.body;
     
     // Find user
@@ -267,77 +263,71 @@ export const updateUser = async (req, res) => {
       profile = new Profile({ userId: req.user._id });
     }
 
-    // Parse skills from comma-separated strings
-    const parseSkills = (skillsString) => {
-      if (!skillsString || typeof skillsString !== 'string') return [];
-      return skillsString.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
-    };
-
     // Parse countries from comma-separated strings
     const parseCountries = (countriesString) => {
       if (!countriesString || typeof countriesString !== 'string') return [];
       return countriesString.split(',').map(country => country.trim()).filter(country => country.length > 0);
     };
 
-    // Create clean profile data object
+    // Create clean profile data object matching onboarding structure
     const profileData = {
       userId: req.user._id,
       bio: bio || profile.bio || "",
-      academic: {
-        level: studyLevel || profile.academic?.level || "",
-        major: major || profile.academic?.major || "",
-        fieldOfStudy: fieldOfStudy || profile.academic?.fieldOfStudy || "",
-        graduationYear: profile.academic?.graduationYear || null,
-        gpa: gpa || profile.academic?.gpa || "",
-        score: profile.academic?.score || null
+      // Academic Background (matching onboarding structure)
+      degree: degree || profile.degree || "",
+      subject: subject || profile.subject || "",
+      university: university || profile.university || "",
+      graduationYear: graduationYear || profile.graduationYear || "",
+      gpa: gpa || profile.gpa || "",
+      // Study Goal (matching onboarding structure)
+      intendedDegree: intendedDegree || profile.intendedDegree || "",
+      fieldOfStudy: fieldOfStudy || profile.fieldOfStudy || "",
+      intakeYear: intakeYear || profile.intakeYear || "",
+      preferredCountries: preferredCountries ? parseCountries(preferredCountries) : (profile.preferredCountries || []),
+      // Budget (matching onboarding structure)
+      budgetRange: budgetRange || profile.budgetRange || "",
+      fundingPlan: fundingPlan || profile.fundingPlan || "",
+      // Standardized Tests (matching onboarding structure)
+      ieltsTaken: ieltsTaken !== undefined ? ieltsTaken : (profile.ieltsTaken || false),
+      ieltsScore: {
+        overall: ieltsScore || profile.ieltsScore?.overall || "",
+        listening: profile.ieltsScore?.listening || "",
+        reading: profile.ieltsScore?.reading || "",
+        writing: profile.ieltsScore?.writing || "",
+        speaking: profile.ieltsScore?.speaking || ""
       },
-      studyGoal: {
-        degree: degree || profile.studyGoal?.degree || "",
-        field: field || profile.studyGoal?.field || "",
-        intendedMajor: intendedMajor || profile.studyGoal?.intendedMajor || "",
-        intakeYear: profile.studyGoal?.intakeYear || null,
-        countries: preferredCountries ? parseCountries(preferredCountries) : (allCountries ? parseCountries(allCountries) : (profile.studyGoal?.countries || [])),
-        preferredCountries: preferredCountries ? parseCountries(preferredCountries) : (profile.studyGoal?.preferredCountries || [])
+      toeflTaken: toeflTaken !== undefined ? toeflTaken : (profile.toeflTaken || false),
+      toeflScore: {
+        total: toeflScore || profile.toeflScore?.total || "",
+        reading: profile.toeflScore?.reading || "",
+        listening: profile.toeflScore?.listening || "",
+        speaking: profile.toeflScore?.speaking || "",
+        writing: profile.toeflScore?.writing || ""
       },
-      budget: {
-        range: budget || profile.budget?.range || "",
-        annual: annualBudget || profile.budget?.annual || "",
-        total: totalBudget || profile.budget?.total || "",
-        funding: profile.budget?.funding || ""
+      greTaken: greTaken !== undefined ? greTaken : (profile.greTaken || false),
+      greScore: {
+        verbal: profile.greScore?.verbal || "",
+        quantitative: profile.greScore?.quantitative || "",
+        analytical: profile.greScore?.analytical || "",
+        total: greScore || profile.greScore?.total || ""
       },
-      careerGoals: {
-        shortTerm: shortTermGoals || profile.careerGoals?.shortTerm || "",
-        longTerm: longTermGoals || profile.careerGoals?.longTerm || "",
-        aspirations: careerAspirations || profile.careerGoals?.aspirations || "",
-        industry: industryInterest || profile.careerGoals?.industry || "",
-        sector: sectorInterest || profile.careerGoals?.sector || "",
-        jobRole: jobRoleAspirations || profile.careerGoals?.jobRole || "",
-        position: positionAspirations || profile.careerGoals?.position || ""
+      gmatTaken: gmatTaken !== undefined ? gmatTaken : (profile.gmatTaken || false),
+      gmatScore: {
+        verbal: profile.gmatScore?.verbal || "",
+        quantitative: profile.gmatScore?.quantitative || "",
+        analytical: profile.gmatScore?.analytical || "",
+        total: gmatScore || profile.gmatScore?.total || ""
       },
-      experience: {
-        years: workExperienceYears || profile.experience?.years || "",
-        duration: workExperienceDuration || profile.experience?.duration || "",
-        company: company || profile.experience?.company || "",
-        position: position || profile.experience?.position || ""
-      },
-      skills: {
-        technical: technicalSkills ? parseSkills(technicalSkills) : (profile.skills?.technical || []),
-        all: allSkills ? parseSkills(allSkills) : (profile.skills?.all || [])
-      },
-      exams: {
-        ielts: {
-          score: ieltsScore || profile.exams?.ielts?.score || ""
-        },
-        gre: {
-          score: greScore || profile.exams?.gre?.score || ""
-        },
-        toefl: {
-          score: toeflScore || profile.exams?.toefl?.score || ""
-        },
-        sat: {
-          score: satScore || profile.exams?.sat?.score || ""
-        }
-      },
+      // Additional Academic Info (matching onboarding structure)
+      workExperience: workExperience || profile.workExperience || "",
+      researchExperience: researchExperience || profile.researchExperience || "",
+      publications: publications || profile.publications || "",
+      certifications: certifications || profile.certifications || "",
+      // Application Readiness (matching onboarding structure)
+      sopStatus: sopStatus || profile.sopStatus || "",
+      lorStatus: lorStatus || profile.lorStatus || "",
+      resumeStatus: resumeStatus || profile.resumeStatus || "",
+      // Preserve existing related data
       internships: profile.internships || [],
       projects: profile.projects || [],
       shortlistedUniversities: profile.shortlistedUniversities || [],
