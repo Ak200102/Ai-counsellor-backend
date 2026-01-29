@@ -5,6 +5,30 @@ import Conversation from "../models/conversation.model.js";
 import Task from "../models/task.model.js";
 import University from "../models/university.model.js";
 
+export const getConversationHistory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Find conversation for this user
+    const conversation = await Conversation.findOne({ userId }).sort({ lastUpdated: -1 });
+    
+    if (!conversation) {
+      return res.json({ messages: [] });
+    }
+    
+    // Return messages sorted by timestamp (newest first)
+    const messages = conversation.messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    res.json({ 
+      messages: messages,
+      lastUpdated: conversation.lastUpdated
+    });
+  } catch (error) {
+    console.error("Error fetching conversation history:", error);
+    res.status(500).json({ message: "Failed to fetch conversation history" });
+  }
+};
+
 export const aiCounsellor = async (req, res) => {
   try {
     console.log("=== AI COUNSELLOR CONTROLLER CALLED ===");
