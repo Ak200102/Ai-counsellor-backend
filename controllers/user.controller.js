@@ -283,7 +283,7 @@ export const updateUser = async (req, res) => {
       intendedDegree: intendedDegree || profile.intendedDegree || "",
       fieldOfStudy: fieldOfStudy || profile.fieldOfStudy || "",
       intakeYear: intakeYear || profile.intakeYear || "",
-      preferredCountries: preferredCountries ? parseCountries(preferredCountries) : (profile.preferredCountries || []),
+      preferredCountries: Array.isArray(preferredCountries) ? preferredCountries : (profile.preferredCountries || []),
       // Budget (matching onboarding structure)
       budgetRange: budgetRange || profile.budgetRange || "",
       fundingPlan: fundingPlan || profile.fundingPlan || "",
