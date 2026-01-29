@@ -44,12 +44,82 @@ const calculateProfileStrength = async (user) => {
 
 export const completeOnboarding = async (req, res) => {
   try {
-    // Update profile with onboarding data
-    await Profile.findOneAndUpdate(
+    console.log('=== ONBOARDING COMPLETION ===');
+    console.log('Request body keys:', Object.keys(req.body));
+    
+    // Structure the onboarding data to match the database schema
+    const onboardingData = {
+      // Academic Background
+      academic: {
+        level: req.body.degree || "",
+        major: req.body.subject || "",
+        university: req.body.university || "",
+        graduationYear: req.body.graduationYear || null,
+        gpa: req.body.gpa || ""
+      },
+      // Study Goal
+      studyGoal: {
+        degree: req.body.intendedDegree || "",
+        field: req.body.fieldOfStudy || "",
+        intakeYear: req.body.intakeYear || null,
+        countries: Array.isArray(req.body.preferredCountries) ? req.body.preferredCountries : []
+      },
+      // Budget
+      budget: {
+        range: req.body.budgetRange || "",
+        funding: req.body.fundingPlan || ""
+      },
+      // Standardized Tests
+      ieltsTaken: req.body.ieltsTaken || false,
+      ieltsScore: req.body.ieltsScore ? {
+        overall: req.body.ieltsScore.overall || req.body.ieltsScore || "",
+        listening: req.body.ieltsScore.listening || "",
+        reading: req.body.ieltsScore.reading || "",
+        writing: req.body.ieltsScore.writing || "",
+        speaking: req.body.ieltsScore.speaking || ""
+      } : {},
+      toeflTaken: req.body.toeflTaken || false,
+      toeflScore: req.body.toeflScore ? {
+        total: req.body.toeflScore.total || req.body.toeflScore || "",
+        reading: req.body.toeflScore.reading || "",
+        listening: req.body.toeflScore.listening || "",
+        speaking: req.body.toeflScore.speaking || "",
+        writing: req.body.toeflScore.writing || ""
+      } : {},
+      greTaken: req.body.greTaken || false,
+      greScore: req.body.greScore ? {
+        total: req.body.greScore.total || req.body.greScore || "",
+        verbal: req.body.greScore.verbal || "",
+        quantitative: req.body.greScore.quantitative || ""
+      } : {},
+      gmatTaken: req.body.gmatTaken || false,
+      gmatScore: req.body.gmatScore ? {
+        total: req.body.gmatScore.total || req.body.gmatScore || "",
+        verbal: req.body.gmatScore.verbal || "",
+        quantitative: req.body.gmatScore.quantitative || ""
+      } : {},
+      // Additional Academic Info
+      workExperience: req.body.workExperience || "",
+      researchExperience: req.body.researchExperience || "",
+      publications: req.body.publications || "",
+      certifications: req.body.certifications || "",
+      // Application Readiness
+      sopStatus: req.body.sopStatus || "",
+      lorStatus: req.body.lorStatus || "",
+      resumeStatus: req.body.resumeStatus || "",
+      userId: req.user._id
+    };
+    
+    console.log('Structured onboarding data:', JSON.stringify(onboardingData, null, 2));
+    
+    // Update profile with structured onboarding data
+    const result = await Profile.findOneAndUpdate(
       { userId: req.user._id },
-      { ...req.body, userId: req.user._id },
+      onboardingData,
       { upsert: true, new: true }
     );
+    
+    console.log('Saved profile keys:', Object.keys(result.toObject()));
 
     // Update user to mark onboarding as completed and set stage
     await User.findByIdAndUpdate(
@@ -60,7 +130,7 @@ export const completeOnboarding = async (req, res) => {
       }
     );
 
-    res.json({ message: "Onboarding completed", user: req.user });
+    res.json({ message: "Onboarding completed successfully", user: req.user });
   } catch (error) {
     console.error("Onboarding error:", error);
     res.status(500).json({ message: "Failed to complete onboarding" });
