@@ -5,7 +5,8 @@ import {
   getCurrentUser,
   updateUser,
   uploadAvatar,
-  removeAvatar
+  removeAvatar,
+  debugProfile
 } from "../controllers/user.controller.js";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
@@ -40,6 +41,7 @@ const upload = multer({ storage: storage });
 router.get("/me", isAuth, getCurrentUser);
 router.post("/onboarding", isAuth, completeOnboarding);
 router.put("/me", isAuth, updateUser);
+router.get("/debug-profile", isAuth, debugProfile);
 router.post("/avatar-upload", isAuth, upload.single('avatar'), uploadAvatar);
 router.delete("/remove-avatar", isAuth, removeAvatar);
 router.get("/ai-counselling-status", isAuth, (req, res) => {

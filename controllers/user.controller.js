@@ -44,10 +44,6 @@ const calculateProfileStrength = async (user) => {
 
 export const completeOnboarding = async (req, res) => {
   try {
-    console.log('=== ONBOARDING COMPLETION ===');
-    console.log('Request body:', req.body);
-    console.log('User ID:', req.user._id);
-    
     // Update profile with onboarding data
     await Profile.findOneAndUpdate(
       { userId: req.user._id },
@@ -64,7 +60,6 @@ export const completeOnboarding = async (req, res) => {
       }
     );
 
-    console.log('Onboarding completed successfully for user:', req.user._id);
     res.json({ message: "Onboarding completed", user: req.user });
   } catch (error) {
     console.error("Onboarding error:", error);
@@ -361,5 +356,49 @@ export const updateUser = async (req, res) => {
       message: "Failed to update profile",
       error: error.message 
     });
+  }
+};
+
+// Debug endpoint to check raw profile data
+export const debugProfile = async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ userId: req.user._id });
+    
+    if (!profile) {
+      return res.json({ 
+        message: "No profile found",
+        userId: req.user._id,
+        profileKeys: [],
+        profileData: null
+      });
+    }
+    
+    const profileObj = profile.toObject();
+    
+    return res.json({ 
+      message: "Profile found",
+      userId: req.user._id,
+      profileKeys: Object.keys(profileObj),
+      profileData: {
+        degree: profileObj.degree,
+        subject: profileObj.subject,
+        university: profileObj.university,
+        graduationYear: profileObj.graduationYear,
+        gpa: profileObj.gpa,
+        intendedDegree: profileObj.intendedDegree,
+        fieldOfStudy: profileObj.fieldOfStudy,
+        intakeYear: profileObj.intakeYear,
+        preferredCountries: profileObj.preferredCountries,
+        budgetRange: profileObj.budgetRange,
+        fundingPlan: profileObj.fundingPlan,
+        ieltsTaken: profileObj.ieltsTaken,
+        ieltsScore: profileObj.ieltsScore,
+        workExperience: profileObj.workExperience,
+        sopStatus: profileObj.sopStatus
+      }
+    });
+  } catch (error) {
+    console.error("Debug profile error:", error);
+    res.status(500).json({ message: "Failed to debug profile" });
   }
 };
