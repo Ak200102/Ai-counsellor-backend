@@ -26,6 +26,7 @@ export const googleAuthSuccess = async (req, res) => {
       id: req.user._id,
       email: req.user.email,
       name: req.user.name,
+      onboardingCompleted: req.user.onboardingCompleted || false,
     }))}`;
     
     res.redirect(redirectUrl);
