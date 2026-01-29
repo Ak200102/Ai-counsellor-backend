@@ -341,13 +341,7 @@ export const updateUser = async (req, res) => {
       profile = new Profile({ userId: req.user._id });
     }
 
-    // Parse countries from comma-separated strings
-    const parseCountries = (countriesString) => {
-      if (!countriesString || typeof countriesString !== 'string') return [];
-      return countriesString.split(',').map(country => country.trim()).filter(country => country.length > 0);
-    };
-
-    // Create profile data with nested structure to match database
+    // Create profile data with nested structure to match database - HANDLE ALL FIELDS
     const profileData = {
       // Academic Background - CONVERT FLAT TO NESTED
       academic: {
@@ -369,7 +363,7 @@ export const updateUser = async (req, res) => {
         range: budgetRange || profile.budget?.range || "",
         funding: fundingPlan || profile.budget?.funding || ""
       },
-      // Standardized Tests - DIRECT STRUCTURE
+      // Standardized Tests - HANDLE ALL TEST FIELDS
       ieltsTaken: ieltsTaken !== undefined ? ieltsTaken : (profile.ieltsTaken || false),
       ieltsScore: ieltsScore ? {
         overall: ieltsScore || profile.ieltsScore?.overall || "",
@@ -398,12 +392,12 @@ export const updateUser = async (req, res) => {
         verbal: profile.gmatScore?.verbal || "",
         quantitative: profile.gmatScore?.quantitative || ""
       } : profile.gmatScore || {},
-      // Additional Academic Info - DIRECT STRUCTURE
+      // Additional Academic Info - HANDLE ALL EXPERIENCE FIELDS
       workExperience: workExperience || profile.workExperience || "",
       researchExperience: researchExperience || profile.researchExperience || "",
       publications: publications || profile.publications || "",
       certifications: certifications || profile.certifications || "",
-      // Application Readiness - DIRECT STRUCTURE
+      // Application Readiness - HANDLE ALL APPLICATION FIELDS
       sopStatus: sopStatus || profile.sopStatus || "",
       lorStatus: lorStatus || profile.lorStatus || "",
       resumeStatus: resumeStatus || profile.resumeStatus || "",
@@ -417,13 +411,13 @@ export const updateUser = async (req, res) => {
       bio: bio || profile.bio || ""
     };
 
-    // Update profile with clean data
-    Object.assign(profile, profileData);
-
     console.log('=== BEFORE SAVE ===');
     console.log('Profile academic:', profile.academic);
     console.log('Profile studyGoal:', profile.studyGoal);
     console.log('Profile budget:', profile.budget);
+
+    // Update profile with clean data
+    Object.assign(profile, profileData);
 
     // Save both user and profile
     await user.save();
