@@ -94,26 +94,6 @@ export const aiCounsellor = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get conversation history for context
-    let conversationHistory = [];
-    try {
-      const existingConversation = await Conversation.findOne({ userId: req.user._id }).sort({ lastUpdated: -1 });
-      if (existingConversation && existingConversation.messages.length > 0) {
-        conversationHistory = existingConversation.messages.slice(-10); // Last 10 messages for context
-      }
-    } catch (error) {
-      console.error("Error fetching conversation history:", error);
-    }
-
-    // Build conversation context for AI
-    const conversationContext = conversationHistory.length > 0 ? `
-PREVIOUS CONVERSATION HISTORY (for context and memory):
-${conversationHistory.map(msg => `[${msg.role.toUpperCase()}]: ${msg.content}`).join('\n')}
-
----
-CURRENT MESSAGE:
-` : "";
-
     console.log("User found:", user.name);
     console.log("User message:", message);
 
