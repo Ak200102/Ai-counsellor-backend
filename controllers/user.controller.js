@@ -201,7 +201,47 @@ export const uploadAvatar = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const { name, password, bio, targetCountry, studyLevel, budget, major, gpa, degree, field } = req.body;
+    const { 
+      name, 
+      password, 
+      bio, 
+      targetCountry, 
+      studyLevel, 
+      budget, 
+      major, 
+      fieldOfStudy,
+      gpa, 
+      degree, 
+      field,
+      intendedMajor,
+      // Career Goals
+      shortTermGoals,
+      longTermGoals,
+      careerAspirations,
+      industryInterest,
+      sectorInterest,
+      jobRoleAspirations,
+      positionAspirations,
+      // Experience
+      workExperienceYears,
+      workExperienceDuration,
+      company,
+      position,
+      // Skills
+      technicalSkills,
+      allSkills,
+      // Exams
+      ieltsScore,
+      greScore,
+      toeflScore,
+      satScore,
+      // Budget Details
+      annualBudget,
+      totalBudget,
+      // Additional Countries
+      preferredCountries,
+      allCountries
+    } = req.body;
     
     // Find user
     const user = await User.findById(req.user._id);
@@ -227,28 +267,77 @@ export const updateUser = async (req, res) => {
       profile = new Profile({ userId: req.user._id });
     }
 
+    // Parse skills from comma-separated strings
+    const parseSkills = (skillsString) => {
+      if (!skillsString || typeof skillsString !== 'string') return [];
+      return skillsString.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
+    };
+
+    // Parse countries from comma-separated strings
+    const parseCountries = (countriesString) => {
+      if (!countriesString || typeof countriesString !== 'string') return [];
+      return countriesString.split(',').map(country => country.trim()).filter(country => country.length > 0);
+    };
+
     // Create clean profile data object
     const profileData = {
       userId: req.user._id,
       bio: bio || profile.bio || "",
       academic: {
-        level: studyLevel || "",
-        major: major || "",
+        level: studyLevel || profile.academic?.level || "",
+        major: major || profile.academic?.major || "",
+        fieldOfStudy: fieldOfStudy || profile.academic?.fieldOfStudy || "",
         graduationYear: profile.academic?.graduationYear || null,
-        gpa: gpa || "",
+        gpa: gpa || profile.academic?.gpa || "",
         score: profile.academic?.score || null
       },
       studyGoal: {
-        degree: degree || "",
-        field: field || "",
+        degree: degree || profile.studyGoal?.degree || "",
+        field: field || profile.studyGoal?.field || "",
+        intendedMajor: intendedMajor || profile.studyGoal?.intendedMajor || "",
         intakeYear: profile.studyGoal?.intakeYear || null,
-        countries: targetCountry ? [targetCountry] : (profile.studyGoal?.countries || [])
+        countries: preferredCountries ? parseCountries(preferredCountries) : (allCountries ? parseCountries(allCountries) : (profile.studyGoal?.countries || [])),
+        preferredCountries: preferredCountries ? parseCountries(preferredCountries) : (profile.studyGoal?.preferredCountries || [])
       },
       budget: {
-        range: budget || "",
+        range: budget || profile.budget?.range || "",
+        annual: annualBudget || profile.budget?.annual || "",
+        total: totalBudget || profile.budget?.total || "",
         funding: profile.budget?.funding || ""
       },
-      exams: profile.exams || {},
+      careerGoals: {
+        shortTerm: shortTermGoals || profile.careerGoals?.shortTerm || "",
+        longTerm: longTermGoals || profile.careerGoals?.longTerm || "",
+        aspirations: careerAspirations || profile.careerGoals?.aspirations || "",
+        industry: industryInterest || profile.careerGoals?.industry || "",
+        sector: sectorInterest || profile.careerGoals?.sector || "",
+        jobRole: jobRoleAspirations || profile.careerGoals?.jobRole || "",
+        position: positionAspirations || profile.careerGoals?.position || ""
+      },
+      experience: {
+        years: workExperienceYears || profile.experience?.years || "",
+        duration: workExperienceDuration || profile.experience?.duration || "",
+        company: company || profile.experience?.company || "",
+        position: position || profile.experience?.position || ""
+      },
+      skills: {
+        technical: technicalSkills ? parseSkills(technicalSkills) : (profile.skills?.technical || []),
+        all: allSkills ? parseSkills(allSkills) : (profile.skills?.all || [])
+      },
+      exams: {
+        ielts: {
+          score: ieltsScore || profile.exams?.ielts?.score || ""
+        },
+        gre: {
+          score: greScore || profile.exams?.gre?.score || ""
+        },
+        toefl: {
+          score: toeflScore || profile.exams?.toefl?.score || ""
+        },
+        sat: {
+          score: satScore || profile.exams?.sat?.score || ""
+        }
+      },
       internships: profile.internships || [],
       projects: profile.projects || [],
       shortlistedUniversities: profile.shortlistedUniversities || [],
