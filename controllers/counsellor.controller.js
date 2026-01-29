@@ -356,34 +356,110 @@ export const aiCounsellor = async (req, res) => {
           console.log("Task created successfully:", newTask.title);
         }
 
+        if (parsed.action === "AUTO_SHORTLIST_MULTIPLE" && parsed.autoShortlisted) {
+          console.log("=== AUTO SHORTLIST MULTIPLE ACTION ===");
+          console.log("Universities to auto-shortlist:", parsed.autoShortlisted);
+          
+          const profile = await Profile.findOne({ userId: req.user._id });
+          if (profile) {
+            const shortlistedResults = [];
+            
+            for (const uniData of parsed.autoShortlisted) {
+              const university = await University.findOne({ name: uniData.name });
+              console.log(`Processing ${uniData.name}:`, university ? "Found" : "Not found");
+              
+              if (university) {
+                // Check if already shortlisted
+                const alreadyShortlisted = profile.shortlistedUniversities.some(
+                  u => u.universityId?.toString() === university._id.toString()
+                );
+                
+                if (!alreadyShortlisted) {
+                  // Use provided category or determine based on rank
+                  let category = uniData.category || "TARGET";
+                  if (university.rank <= 20) category = "DREAM";
+                  if (university.rank > 50) category = "SAFE";
+
+                  profile.shortlistedUniversities.push({
+                    universityId: university._id,
+                    category: category,
+                    shortlistedAt: new Date()
+                  });
+                  
+                  shortlistedResults.push({
+                    name: university.name,
+                    category: category
+                  });
+                  
+                  console.log(`Auto-shortlisted: ${university.name} (${category})`);
+                } else {
+                  console.log(`${university.name} already shortlisted`);
+                }
+              }
+            }
+            
+            if (shortlistedResults.length > 0) {
+              await profile.save();
+              console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
+              parsed.autoShortlistedResults = shortlistedResults;
+            }
+          }
+        }
+
         if (parsed.action === "SHORTLIST_UNIVERSITY" && parsed.universityName) {
+          console.log("=== SHORTLIST UNIVERSITY ACTION ===");
+          console.log("University name from AI:", parsed.universityName);
+          
           // Find university by name
           const university = await University.findOne({ name: parsed.universityName });
+          console.log("Found university:", university);
+          
           if (university) {
+            console.log("University ID:", university._id);
             const profile = await Profile.findOne({ userId: req.user._id });
+            console.log("User profile found:", !!profile);
+            
             if (profile) {
+              console.log("Current shortlisted universities:", profile.shortlistedUniversities.length);
+              
               // Check if already shortlisted
               const alreadyShortlisted = profile.shortlistedUniversities.some(
                 u => u.universityId?.toString() === university._id.toString()
               );
+              console.log("Already shortlisted:", alreadyShortlisted);
+              
               if (!alreadyShortlisted) {
                 // Determine category based on fit score
                 let category = "TARGET";
                 if (university.rank <= 20) category = "DREAM";
                 if (university.rank > 50) category = "SAFE";
 
+                console.log("Adding to shortlist with category:", category);
+
                 profile.shortlistedUniversities.push({
                   universityId: university._id,
                   category: category,
                   shortlistedAt: new Date()
                 });
+                
+                console.log("Profile before save:", profile.shortlistedUniversities.length);
                 await profile.save();
+                console.log("Profile after save:", profile.shortlistedUniversities.length);
+                
                 parsed.universityShortlisted = {
                   name: university.name,
                   category: category
                 };
+                console.log("University shortlisted successfully:", parsed.universityShortlisted);
+              } else {
+                console.log("University already shortlisted");
               }
             }
+          } else {
+            console.log("University not found in database");
+            // Try to find partial match
+            const allUniversities = await University.find({});
+            console.log("Available universities:", allUniversities.map(u => u.name));
           }
         }
 
