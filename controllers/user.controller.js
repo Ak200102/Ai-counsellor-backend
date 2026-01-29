@@ -250,7 +250,8 @@ export const uploadAvatar = async (req, res) => {
     // Update user with avatar URL
     await User.findByIdAndUpdate(req.user._id, { avatar: avatarUrl });
     console.log("User updated with avatar:", avatarUrl);
-
+    console.log("Avatar URL saved:", avatarUrl); // added this line
+    
     console.log("=== AVATAR UPLOAD SUCCESS ===");
     res.json({
       message: "Avatar uploaded successfully",
@@ -266,6 +267,10 @@ export const uploadAvatar = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
+    console.log('=== BACKEND UPDATE DEBUG ===');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body:', req.body);
+    
     const { 
       name, 
       password, 
@@ -303,6 +308,14 @@ export const updateUser = async (req, res) => {
       lorStatus,
       resumeStatus
     } = req.body;
+    
+    console.log('=== EXTRACTED FIELDS ===');
+    console.log('degree:', degree);
+    console.log('subject:', subject);
+    console.log('budgetRange:', budgetRange);
+    console.log('intendedDegree:', intendedDegree);
+    console.log('fieldOfStudy:', fieldOfStudy);
+    console.log('preferredCountries:', preferredCountries);
     
     // Find user
     const user = await User.findById(req.user._id);
@@ -407,9 +420,19 @@ export const updateUser = async (req, res) => {
     // Update profile with clean data
     Object.assign(profile, profileData);
 
+    console.log('=== BEFORE SAVE ===');
+    console.log('Profile academic:', profile.academic);
+    console.log('Profile studyGoal:', profile.studyGoal);
+    console.log('Profile budget:', profile.budget);
+
     // Save both user and profile
     await user.save();
     await profile.save();
+
+    console.log('=== AFTER SAVE ===');
+    console.log('Saved profile academic:', profile.academic);
+    console.log('Saved profile studyGoal:', profile.studyGoal);
+    console.log('Saved profile budget:', profile.budget);
 
     // Return user without password
     const userObject = user.toObject();
