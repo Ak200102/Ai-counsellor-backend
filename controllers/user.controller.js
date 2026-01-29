@@ -415,6 +415,22 @@ export const updateUser = async (req, res) => {
     console.log('Profile academic:', profile.academic);
     console.log('Profile studyGoal:', profile.studyGoal);
     console.log('Profile budget:', profile.budget);
+    console.log('=== ALL FIELDS BEING SAVED ===');
+    console.log('workExperience:', profileData.workExperience);
+    console.log('researchExperience:', profileData.researchExperience);
+    console.log('publications:', profileData.publications);
+    console.log('certifications:', profileData.certifications);
+    console.log('sopStatus:', profileData.sopStatus);
+    console.log('lorStatus:', profileData.lorStatus);
+    console.log('resumeStatus:', profileData.resumeStatus);
+    console.log('ieltsTaken:', profileData.ieltsTaken);
+    console.log('ieltsScore:', profileData.ieltsScore);
+    console.log('toeflTaken:', profileData.toeflTaken);
+    console.log('toeflScore:', profileData.toeflScore);
+    console.log('greTaken:', profileData.greTaken);
+    console.log('greScore:', profileData.greScore);
+    console.log('gmatTaken:', profileData.gmatTaken);
+    console.log('gmatScore:', profileData.gmatScore);
 
     // Update profile with clean data
     Object.assign(profile, profileData);
@@ -427,6 +443,22 @@ export const updateUser = async (req, res) => {
     console.log('Saved profile academic:', profile.academic);
     console.log('Saved profile studyGoal:', profile.studyGoal);
     console.log('Saved profile budget:', profile.budget);
+    console.log('=== ALL FIELDS AFTER SAVE ===');
+    console.log('Saved workExperience:', profile.workExperience);
+    console.log('Saved researchExperience:', profile.researchExperience);
+    console.log('Saved publications:', profile.publications);
+    console.log('Saved certifications:', profile.certifications);
+    console.log('Saved sopStatus:', profile.sopStatus);
+    console.log('Saved lorStatus:', profile.lorStatus);
+    console.log('Saved resumeStatus:', profile.resumeStatus);
+    console.log('Saved ieltsTaken:', profile.ieltsTaken);
+    console.log('Saved ieltsScore:', profile.ieltsScore);
+    console.log('Saved toeflTaken:', profile.toeflTaken);
+    console.log('Saved toeflScore:', profile.toeflScore);
+    console.log('Saved greTaken:', profile.greTaken);
+    console.log('Saved greScore:', profile.greScore);
+    console.log('Saved gmatTaken:', profile.gmatTaken);
+    console.log('Saved gmatScore:', profile.gmatScore);
 
     // Return user without password
     const userObject = user.toObject();
