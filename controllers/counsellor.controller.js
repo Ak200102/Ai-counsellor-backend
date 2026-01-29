@@ -5,6 +5,58 @@ import Conversation from "../models/conversation.model.js";
 import Task from "../models/task.model.js";
 import University from "../models/university.model.js";
 
+export const saveConversation = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { messages } = req.body;
+    
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ message: "Messages array is required" });
+    }
+    
+    // Find or create conversation for this user
+    let conversation = await Conversation.findOne({ userId });
+    if (!conversation) {
+      conversation = new Conversation({ userId, messages: [] });
+    }
+    
+    // Add new messages that aren't already saved
+    for (const message of messages) {
+      // Check if message already exists (by content and approximate timestamp)
+      const exists = conversation.messages.some(existing => 
+        existing.content === message.content && 
+        existing.role === message.role &&
+        Math.abs(new Date(existing.timestamp) - new Date(message.timestamp || Date.now())) < 5000 // 5 second tolerance
+      );
+      
+      if (!exists) {
+        conversation.messages.push({
+          role: message.role,
+          content: message.content,
+          timestamp: message.timestamp || new Date()
+        });
+      }
+    }
+    
+    // Keep only last 50 messages
+    if (conversation.messages.length > 50) {
+      conversation.messages = conversation.messages.slice(-50);
+    }
+    
+    conversation.lastUpdated = new Date();
+    await conversation.save();
+    
+    res.json({ 
+      message: "Conversation saved successfully",
+      messagesSaved: messages.length,
+      totalMessages: conversation.messages.length
+    });
+  } catch (error) {
+    console.error("Error saving conversation:", error);
+    res.status(500).json({ message: "Failed to save conversation" });
+  }
+};
+
 export const getConversationHistory = async (req, res) => {
   try {
     const userId = req.user._id;
