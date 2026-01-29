@@ -123,6 +123,18 @@ export const getCurrentUser = async (req, res) => {
       .populate("shortlistedUniversities.universityId")
       .populate("lockedUniversity.universityId");
     
+    // Debug: Log the actual profile data from MongoDB
+    console.log('=== MONGODB PROFILE DEBUG ===');
+    console.log('User ID:', req.user._id);
+    console.log('Profile found:', !!profile);
+    if (profile) {
+      console.log('Profile degree:', profile.degree);
+      console.log('Profile subject:', profile.subject);
+      console.log('Profile intendedDegree:', profile.intendedDegree);
+      console.log('Profile fieldOfStudy:', profile.fieldOfStudy);
+      console.log('Profile keys:', Object.keys(profile.toObject()));
+    }
+    
     // Calculate profile strength
     const profileStrength = await calculateProfileStrength(user);
     
