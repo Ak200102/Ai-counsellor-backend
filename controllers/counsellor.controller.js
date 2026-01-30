@@ -313,6 +313,10 @@ Info Provided: ${infoProvided.join(", ")}
       console.log("✅ geminiResponse succeeded");
       
       // OVERRIDE: If user explicitly asks to lock a university, force LOCK_UNIVERSITY action
+      console.log("🔍 Checking for lock override...");
+      console.log("Message contains 'lock':", message.toLowerCase().includes('lock'));
+      console.log("Message:", message);
+      
       if (message.toLowerCase().includes('lock')) {
         console.log("🔒 OVERRIDE: User wants to lock university, forcing LOCK_UNIVERSITY action");
         
@@ -381,14 +385,17 @@ Info Provided: ${infoProvided.join(", ")}
 
     console.log("AI Response from gemini.js:", aiText);
     console.log("AI Response length:", aiText?.length || 0);
+    console.log("AI Response type:", typeof aiText);
 
     // Fallback to mock AI response if API fails
     if (!aiText || aiText.trim().length === 0) {
-      console.log("AI service failed, using fallback response");
+      console.log("❌ AI service failed - empty response, using fallback response");
       const fallbackResponse = generateFallbackAIResponse(context);
       console.log("Fallback response:", fallbackResponse);
       return res.json(fallbackResponse);
     }
+
+    console.log("✅ AI service succeeded, parsing response...");
 
     let parsed;
     try {
