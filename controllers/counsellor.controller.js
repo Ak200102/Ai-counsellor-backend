@@ -316,6 +316,9 @@ export const aiCounsellor = async (req, res) => {
         .replace(/Here's a task for you:/g, '') // Remove task introduction
         .replace(/Here are the shortlisted universities:/g, '') // Remove university list intro
         .replace(/Please let me know how I can assist you further\./g, '') // Remove closing
+        .replace(/Action: [A-Z_]+/g, '') // Remove action lines
+        .replace(/Auto-Shortlisted Universities:/g, '') // Remove auto-shortlisted header
+        .replace(/- [^(]+\([^)]+\)/g, '') // Remove university list items with categories
         .replace(/\n\n+/g, '\n\n') // Fix excessive line breaks
         .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
         .replace(/\[[^\]]*\]/g, '') // Remove any remaining arrays
