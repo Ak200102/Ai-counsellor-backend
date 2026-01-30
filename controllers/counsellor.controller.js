@@ -292,9 +292,10 @@ export const aiCounsellor = async (req, res) => {
     console.log("Shortlisted universities IDs:", profileData?.shortlistedUniversities?.map(u => u.universityId));
     console.log("Carnegie Mellon ID should be: 6979264b061b38d8d1d18228");
     
-    // TEMP DEBUG: Add profile info to message for debugging
+    // TEMP DEBUG: Add user message and profile info to message for debugging
     const debugInfo = `
 🔍 DEBUG INFO:
+User Message: "${message}"
 Profile Data Found: ${profileData ? "YES" : "NO"}
 Academic: ${profile.academic}
 Goal: ${profile.goal}
