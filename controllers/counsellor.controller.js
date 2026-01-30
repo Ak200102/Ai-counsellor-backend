@@ -65,13 +65,18 @@ export const deleteConversationHistory = async (req, res) => {
 
 export const getConversationHistory = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user._id; // Use authenticated user ID
+    console.log("Fetching conversation history for user:", userId);
     
     const conversation = await Conversation.findOne({ userId }).sort({ lastUpdated: -1 });
+    console.log("Found conversation:", !!conversation);
     
     if (!conversation) {
+      console.log("No conversation found for user:", userId);
       return res.json({ messages: [] });
     }
+    
+    console.log("Conversation has", conversation.messages.length, "messages");
     
     // Return messages sorted by timestamp (newest first)
     const messages = conversation.messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -430,7 +435,8 @@ export const aiCounsellor = async (req, res) => {
     
     try {
       await conversation.save();
-      console.log("Conversation saved successfully");
+      console.log("Conversation saved successfully for user:", req.user._id);
+      console.log("Total messages in conversation:", conversation.messages.length);
     } catch (saveError) {
       console.error("Error saving conversation:", saveError);
       // Don't fail the entire request if conversation save fails
