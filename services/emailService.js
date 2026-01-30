@@ -7,8 +7,9 @@ function initializeTransporter() {
   if (initialized) return;
   
   console.log("📧 Email Service Initializing...");
-  console.log("Gmail User:", process.env.GMAIL_USER);
-  console.log("Gmail Password exists:", !!process.env.GMAIL_PASSWORD);
+  console.log("📧 Gmail User:", process.env.GMAIL_USER ? "SET" : "NOT SET");
+  console.log("📧 Gmail Password exists:", !!process.env.GMAIL_PASSWORD);
+  console.log("📧 Node Environment:", process.env.NODE_ENV);
   
   try {
     if (process.env.GMAIL_USER && process.env.GMAIL_PASSWORD) {
@@ -26,15 +27,24 @@ function initializeTransporter() {
       // Verify connection
       transporter.verify((error, success) => {
         if (error) {
-          console.warn("⚠️ Email service warning:", error.message);
+          console.error("❌ Email service verification failed:", error);
+          console.log("📧 Common issues:");
+          console.log("  - Gmail App Password required (not regular password)");
+          console.log("  - 2-factor authentication enabled");
+          console.log("  - Less secure apps allowed");
           console.log("📧 OTPs will be logged to console for testing");
         } else {
           console.log("✅ Email service ready - Emails will be sent!");
         }
       });
+    } else {
+      console.error("❌ Gmail credentials not configured:");
+      console.log("  - GMAIL_USER:", process.env.GMAIL_USER ? "SET" : "NOT SET");
+      console.log("  - GMAIL_PASSWORD:", process.env.GMAIL_PASSWORD ? "SET" : "NOT SET");
+      console.log("📧 Please set Gmail credentials in environment variables");
     }
   } catch (error) {
-    console.warn("⚠️ Email service error:", error.message);
+    console.error("❌ Email service error:", error.message);
     console.log("📧 OTPs will be logged to console for testing");
   }
   
@@ -100,10 +110,27 @@ export const sendOTPEmail = async (email, otp, userName) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`📧 OTP email sent to ${email}`);
+    console.log(`📧 OTP email sent successfully to ${email}`);
     return { success: true, message: "OTP sent to email" };
   } catch (error) {
-    console.error("❌ Email send error:", error.message);
+    console.error("❌ Email send error details:");
+    console.error("  - Error code:", error.code);
+    console.error("  - Error message:", error.message);
+    console.error("  - Command:", error.command);
+    console.error("  - Response:", error.response);
+    
+    // Specific Gmail error handling
+    if (error.code === 'EAUTH') {
+      console.error("❌ Authentication failed - Check Gmail credentials:");
+      console.error("  - Use Gmail App Password (not regular password)");
+      console.error("  - Enable 2-factor authentication");
+      console.error("  - Generate App Password from Google Account settings");
+    } else if (error.code === 'ECONNECTION') {
+      console.error("❌ Connection failed - Check network/firewall");
+    } else if (error.code === 'EMESSAGE') {
+      console.error("❌ Message format error");
+    }
+    
     // Fallback: log to console instead of failing
     console.log("\n🔐 OTP FOR TESTING (EMAIL FAILED):");
     console.log(`Email: ${email}`);
