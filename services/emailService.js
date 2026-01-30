@@ -3,6 +3,9 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPEmail = async (email, otp, userName) => {
+  console.log("📧 RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
+console.log("📧 FROM_EMAIL:", process.env.FROM_EMAIL);
+console.log("📧 Sending OTP to:", email);
   // Fallback if API key missing
   if (!process.env.RESEND_API_KEY) {
     console.log("🔐 OTP (EMAIL DISABLED):", otp);
@@ -30,7 +33,7 @@ export const sendOTPEmail = async (email, otp, userName) => {
 
             <p>This code will expire in <strong>10 minutes</strong>.</p>
             <p style="font-size:12px;color:#777">
-              If you didn’t request this, you can safely ignore this email.
+              If you didn't request this, you can safely ignore this email.
             </p>
           </div>
         </div>
