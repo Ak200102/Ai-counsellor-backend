@@ -193,7 +193,24 @@ const geminiResponse = async (context) => {
       : "";
 
     const prompt = `
-�🎓 AI COUNSELLOR CORE REQUIREMENTS - CRITICAL 🎓
+🚨🚨🚨 CRITICAL: COMPLETE JSON ONLY - NO EXCEPTIONS 🚨🚨🚨
+YOU MUST respond with a SINGLE, COMPLETE, VALID JSON object.
+NEVER include incomplete fields like ,"profileAssessment":, ,"collegeRecommendations":, etc.
+ALL fields must have complete values or be empty arrays/null.
+Your ENTIRE response must be ONE JSON object from start to finish.
+NO text before or after the JSON object.
+NO incomplete JSON syntax.
+NO mixing natural language with JSON.
+
+EXAMPLE OF WRONG (NEVER DO THIS):
+❌ {"message": "Hello", ,"profileAssessment":, ,"collegeRecommendations":, ,"action": "CREATE_TASK", ,"task":,}
+
+EXAMPLE OF RIGHT (ALWAYS DO THIS):
+✅ {"message": "Hello", "profileAssessment": {"academics": "Average", "internships": "None", "readiness": "Medium"}, "collegeRecommendations": [], "action": "CREATE_TASK", "task": {"title": "Complete Profile", "reason": "Needed for recommendations"}}
+
+FAILURE TO PROVIDE COMPLETE JSON WILL BREAK THE SYSTEM!
+
+🎓 AI COUNSELLOR CORE REQUIREMENTS - CRITICAL 🎓
 You are an expert AI Counsellor that MUST:
 
 1. **UNDERSTAND USER PROFILE & STAGE:**
