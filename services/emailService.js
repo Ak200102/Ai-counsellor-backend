@@ -3,7 +3,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPEmail = async (email, otp, userName) => {
-  console.log("� Using Resend email service...");
+  console.log("📧 Using Resend email service...");
   console.log("📧 RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
   console.log("📧 FROM_EMAIL:", process.env.FROM_EMAIL);
   console.log("📧 Sending OTP to:", email);
@@ -16,7 +16,7 @@ export const sendOTPEmail = async (email, otp, userName) => {
 
   try {
     await resend.emails.send({
-      from: `AI Counsellor <${process.env.FROM_EMAIL}>`,
+      from: "onboarding@resend.dev",  // Use Resend's verified domain
       to: email,
       subject: "Verify your AI Counsellor account",
       html: `
