@@ -414,7 +414,25 @@ export const aiCounsellor = async (req, res) => {
     });
 
     // Save AI response to conversation history (extract message from parsed JSON)
-    const aiMessage = parsed.message || parsed.response || "AI response processed";
+    let aiMessage = parsed.message || parsed.response || "AI response processed";
+    
+    // Clean up the message to remove any JSON artifacts
+    if (typeof aiMessage === 'string') {
+      aiMessage = aiMessage
+        .replace(/^,?"/, '') // Remove leading ," or "
+        .replace(/",?$/, '') // Remove trailing ," or "
+        .replace(/,"[^"]+":/g, '') // Remove incomplete JSON fields
+        .replace(/:\s*,/g, '') // Remove empty values
+        .replace(/:\s*}/g, '') // Remove empty values at end
+        .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
+        .trim();
+      
+      // If the message is now empty or just JSON artifacts, provide a default
+      if (!aiMessage || aiMessage.length < 10) {
+        aiMessage = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance.";
+      }
+    }
+    
     conversation.messages.push({
       role: "assistant",
       content: aiMessage,
