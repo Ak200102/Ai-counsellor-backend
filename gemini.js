@@ -180,46 +180,43 @@ const geminiResponse = async (context) => {
     const prompt = `
 �🔥🔥🔥 IMMEDIATE RULES - FOLLOW EXACTLY OR FAIL 🔥🔥🔥
 
-RULE 1: NO COLLEGE CARDS FOR PROFILE QUESTIONS
-If user asks "how is my profile", "profile assessment", "am I ready", or ANY profile-related question:
+RULE 1: ABSOLUTELY NO COLLEGE CARDS FOR GENERAL QUESTIONS
+If user asks ANYTHING except explicit college recommendations:
+- "What should I focus on now?"
+- "How is my profile?"
+- "What should I do?"
+- "Help me"
+- ANY general question
 - collegeRecommendations MUST be [] (EMPTY ARRAY)
-- Create a task for profile improvement
-- Create relevant task if needed
+- DO NOT show college names
+- DO NOT recommend universities
+- ONLY give advice and create tasks
 
-RULE 2: NO COLLEGE CARDS FOR GENERAL QUESTIONS  
-If user asks about: interview, scholarship, visa, career, study tips, personal development:
-- collegeRecommendations MUST be [] (EMPTY ARRAY) 
-- Provide helpful advice
-- Create relevant task if needed
-
-RULE 3: ONLY SHOW COLLEGE CARDS WHEN EXPLICITLY ASKED
-ONLY show collegeRecommendations when user says:
-- "recommend colleges/universities"
-- "suggest universities" 
+RULE 2: ONLY SHOW COLLEGES WHEN EXPLICITLY ASKED
+ONLY show collegeRecommendations when user says EXACTLY:
+- "recommend colleges"
+- "recommend universities" 
+- "suggest colleges"
+- "suggest universities"
 - "what colleges should I apply to"
 - "show me universities for [field]"
-- Similar EXPLICIT requests
+- NOTHING ELSE triggers college recommendations
 
-RULE 4: BE CONCISE - MAX 3-4 SENTENCES
-Keep responses short and direct. No long explanations.
+RULE 3: BE CONCISE - MAX 2 SENTENCES
+Keep responses very short. No long explanations.
 
-RULE 5: EXECUTE ACTIONS IMMEDIATELY
+RULE 4: EXECUTE ACTIONS IMMEDIATELY
 - CREATE_TASK: Must include task object with title and reason
 - AUTO_SHORTLIST_MULTIPLE: Must include autoShortlisted array
 - SHORTLIST_UNIVERSITY: Must include universityName
 - LOCK_UNIVERSITY: Must include universityName
 
-RULE 6: TASK CREATION - CRITICAL
-When user says "create task", "generate task", "add task", or asks for any task:
+RULE 5: TASK CREATION - CRITICAL
+When user asks "create task", "generate task", "add task", or asks for guidance:
 - MUST include action: "CREATE_TASK"
 - MUST include task object with title and reason
 - DO NOT give generic responses
 - Create relevant task based on user's profile gaps
-
-TASK CREATION EXAMPLES:
-- User: "create task" → Task for improving profile
-- User: "generate task for internship" → Task for finding internships
-- User: "add task for documents" → Task for document preparation
 
 �� CRITICAL RULE - NO COLLEGE RECOMMENDATIONS FOR GENERAL QUESTIONS 🚨
 DO NOT show college recommendation cards for:
@@ -480,9 +477,9 @@ When student asks to "lock [University Name]":
 
 EXAMPLES - FOLLOW EXACTLY:
 
-Example 1 - User asks "how is my profile":
+Example 1 - User asks "What should I focus on now?":
 {
-  "message": "Your profile is strong with GPA 3.8. Gain internship experience to strengthen it.",
+  "message": "Focus on gaining internship experience to strengthen your profile.",
   "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
   "collegeRecommendations": [],
   "action": "CREATE_TASK",

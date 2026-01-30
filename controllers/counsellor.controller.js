@@ -249,7 +249,7 @@ export const aiCounsellor = async (req, res) => {
     const conversationHistory = conversation 
       ? conversation.messages.slice(-10).map(msg => ({
           role: msg.role,
-          content: msg.content
+          content: msg.content.replace(/🔍 DEBUG INFO:[\s\S]*?---/g, '').trim() // Remove debug info
         }))
       : [];
 
