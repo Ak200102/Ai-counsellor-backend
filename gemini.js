@@ -185,7 +185,7 @@ RESPONSE FORMAT (STRICT JSON):
           ? `Based on your profile, you are a ${profile?.academic?.level || 'student'} studying ${profile?.academic?.major || 'your field'} with goals to pursue ${profile?.studyGoal?.degree || 'higher education'} in ${profile?.studyGoal?.field || 'your field'}. You have ${shortlistedUniversities?.length || 0} universities shortlisted: ${shortlistedUniversities?.map(u => u.universityId?.name || u.name || 'Unknown').join(', ') || 'None'}.`
           : userMessage.toLowerCase().includes("what should i focus") || userMessage.toLowerCase().includes("what should i do")
           ? `Based on your current progress, you should focus on reviewing your ${shortlistedUniversities?.length || 0} shortlisted universities: ${shortlistedUniversities?.map(u => u.universityId?.name || u.name || 'Unknown').join(', ') || 'None'}. ${profile?.academic?.gpa ? `With your GPA of ${profile.academic.gpa}, ` : ''}you should compare admission requirements and prepare your application materials.`
-          : "I'm here to help with your study abroad journey.",
+          : "I need a bit more detail to guide you properly. What's your biggest concern right now?",
         profileAssessment: { academics: "Average", internships: "None", readiness: "Medium" },
         collegeRecommendations: [],
         decisionGuidance: null,

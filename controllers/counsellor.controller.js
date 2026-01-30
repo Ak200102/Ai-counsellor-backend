@@ -5,6 +5,32 @@ import Conversation from "../models/conversation.model.js";
 import Task from "../models/task.model.js";
 import University from "../models/university.model.js";
 
+// Safe JSON extraction function - preserves AI intelligence while ensuring valid JSON
+function extractJSONSafely(text) {
+  if (!text || typeof text !== "string") return null;
+
+  // Try direct parse first
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  // Find first valid JSON object
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    return null;
+  }
+
+  const possibleJSON = text.slice(firstBrace, lastBrace + 1);
+
+  try {
+    return JSON.parse(possibleJSON);
+  } catch {
+    return null;
+  }
+}
+
 export const saveConversation = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -296,26 +322,20 @@ export const aiCounsellor = async (req, res) => {
     try {
       aiText = await geminiResponse(context);
       
-      // Clean up AI response - remove JSON objects and debug info
-      aiText = aiText
-        .replace(/\{[^}]*"title"[^}]*\}/g, '') // Remove task JSON objects
-        .replace(/\{[^}]*"universityId"[^}]*\}/g, '') // Remove university JSON objects
-        .replace(/\{[^}]*"universityName"[^}]*\}/g, '') // Remove university name JSON
-        .replace(/\[[^\]]*"universityId"[^\]]*\]/g, '') // Remove university arrays
-        .replace(/\[[^\]]*"category"[^\]]*\]/g, '') // Remove category arrays
-        .replace(/Here's a task for you:/g, '') // Remove task introduction
-        .replace(/Here are the shortlisted universities:/g, '') // Remove university list intro
-        .replace(/Please let me know how I can assist you further\./g, '') // Remove closing
-        .replace(/Action: [A-Z_]+/g, '') // Remove action lines
-        .replace(/Auto-Shortlisted Universities:/g, '') // Remove auto-shortlisted header
-        .replace(/- [^(]+\([^)]+\)/g, '') // Remove university list items with categories
-        .replace(/\n\n+/g, '\n\n') // Fix excessive line breaks
-        .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
-        .replace(/\[[^\]]*\]/g, '') // Remove any remaining arrays
-        .trim();
-      
-      // OVERRIDE: If user explicitly asks to lock a university, let AI handle it naturally
-      // Remove hardcoded university logic - AI should provide dynamic recommendations
+      // Safe JSON extraction - preserves AI intelligence while ensuring valid parsing
+      const parsed = extractJSONSafely(aiText);
+
+      if (!parsed) {
+        // Single fallback only - no generic responses
+        return res.json({
+          message: "I need a bit more detail to guide you properly. What's your biggest concern right now?",
+          action: "NONE",
+          collegeRecommendations: [],
+          autoShortlisted: []
+        });
+      }
+
+      // Use the safely parsed response directly - no destructive cleaning
       
     } catch (geminiError) {
       // Use fallback response
@@ -336,46 +356,13 @@ export const aiCounsellor = async (req, res) => {
 
     console.log("AI Response from gemini.js:", aiText);
 
-    // Fallback to mock AI response if API fails
-    if (!aiText || aiText.trim().length === 0) {
-      const fallbackResponse = generateFallbackAIResponse(context);
-      return res.json(fallbackResponse);
-    }
+    // Safe JSON extraction already done above - 'parsed' variable is ready
+    // Continue with auto-action processing (unchanged)
 
-    let parsed;
-    try {
-      parsed = JSON.parse(aiText);
-    } catch (parseError) {
-      console.error("JSON parsing failed:", parseError.message);
-      console.error("Raw AI response:", aiText);
-      
-      // Try to extract JSON from malformed response
-      let extractedJson = null;
-      
-      // Look for JSON object in the response
-      const jsonMatch = aiText.match(/\{[^{}]*"action"[^{}]*\}/);
-      if (jsonMatch) {
-        try {
-          extractedJson = JSON.parse(jsonMatch[0]);
-          console.log("Extracted JSON from malformed response:", extractedJson);
-        } catch (extractError) {
-          console.error("Failed to extract JSON:", extractError.message);
-        }
-      }
-      
-      // If we have extracted JSON, use it; otherwise create fallback
-      if (extractedJson) {
-        parsed = extractedJson;
-      } else {
-        // If JSON parsing fails, create a structured response from the text
-        const fallbackResponse = generateFallbackAIResponse(context, aiText);
-        parsed = fallbackResponse;
-        console.log("Using fallback response due to JSON parsing failure");
-      }
+    // Validate and ensure required fields exist - NO GENERIC FALLBACKS
+    if (!parsed.message) {
+      parsed.message = "I need a bit more detail to guide you properly. What's your biggest concern right now?";
     }
-
-    // Validate and ensure required fields exist
-    if (!parsed.message) parsed.message = "I'm here to help with your study abroad journey.";
     if (!parsed.profileAssessment) {
       parsed.profileAssessment = {
         academics: "Average",
@@ -459,28 +446,12 @@ export const aiCounsellor = async (req, res) => {
     });
 
     // Save AI response to conversation history (extract message from parsed JSON)
+    // Use the AI message directly - no destructive cleaning
     let aiMessage = parsed.message || parsed.response || "AI response processed";
     
-    // Clean up the message to remove any JSON artifacts
+    // Only trim whitespace - preserve all AI intelligence
     if (typeof aiMessage === 'string') {
-      // More aggressive cleaning for malformed JSON
-      aiMessage = aiMessage
-        .replace(/^[,\s"]*/, '') // Remove leading commas, quotes, spaces
-        .replace(/[,\s"]*$/, '') // Remove trailing commas, quotes, spaces
-        .replace(/,"[^"]*":/g, '') // Remove incomplete JSON fields
-        .replace(/:\s*[,}]/g, '') // Remove empty values before commas or braces
-        .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
-        .replace(/"[^"]*":\s*"[^"]*"/g, '') // Remove key-value pairs
-        .replace(/"[^"]*":\s*[^,}]*[,}]/g, '') // Remove key-value pairs with non-string values
-        .replace(/^\s*\{|\}\s*$/g, '') // Remove braces at start/end
-        .replace(/,\s*}/g, '}') // Remove trailing commas before closing brace
-        .replace(/,\s*,/g, ',') // Remove double commas
-        .trim();
-      
-      // If the message is still malformed or too short, provide a default
-      if (!aiMessage || aiMessage.length < 15 || aiMessage.includes(':') || aiMessage.includes('"')) {
-        aiMessage = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance and recommendations.";
-      }
+      aiMessage = aiMessage.trim();
     }
     
     conversation.messages.push({
