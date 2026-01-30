@@ -26,21 +26,16 @@ export const saveConversation = async (req, res) => {
         conversation.messages.push({
           role: msg.role,
           content: msg.content,
-          timestamp: new Date(msg.timestamp || Date.now())
+          timestamp: new Date()
         });
       });
     }
 
-    // Keep only last 50 messages
-    if (conversation.messages.length > 50) {
-      conversation.messages = conversation.messages.slice(-50);
-    }
-
-    conversation.lastUpdated = new Date();
+    // Save conversation
     await conversation.save();
 
     res.json({
-      message: "Conversation saved successfully",
+      success: true,
       messagesSaved: messages.length,
       totalMessages: conversation.messages.length
     });
@@ -58,7 +53,7 @@ export const deleteConversationHistory = async (req, res) => {
     const result = await Conversation.deleteOne({ userId });
     
     if (result.deletedCount > 0) {
-      res.json({ message: "Chat history deleted successfully" });
+      res.json({ message: "Conversation history deleted successfully" });
     } else {
       res.json({ message: "No chat history found to delete" });
     }
@@ -70,9 +65,8 @@ export const deleteConversationHistory = async (req, res) => {
 
 export const getConversationHistory = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const { userId } = req.params;
     
-    // Find conversation for this user
     const conversation = await Conversation.findOne({ userId }).sort({ lastUpdated: -1 });
     
     if (!conversation) {
@@ -82,7 +76,7 @@ export const getConversationHistory = async (req, res) => {
     // Return messages sorted by timestamp (newest first)
     const messages = conversation.messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
-    res.json({ 
+    res.json({
       messages: messages,
       lastUpdated: conversation.lastUpdated
     });
@@ -146,118 +140,84 @@ export const aiCounsellor = async (req, res) => {
       exams: "Not provided",
       experience: "Not provided",
       applications: "Not provided",
-      universities: "Not provided",
-      isComplete: false
+      universities: "Not provided"
     };
 
     let infoProvided = [];
     let completenessScore = 0;
-    const maxScore = 6; // academic, goal, budget, exams, experience, applications
 
     try {
       if (profileData) {
         // 🎓 ACADEMIC BACKGROUND - Complete data
         if (profileData.academic) {
-          const academic = profileData.academic;
-          if (academic.level && academic.level !== 'Not specified' && academic.level !== '') completenessScore++;
-          if (academic.major && academic.major !== 'Not specified' && academic.major !== '') completenessScore++;
-          if (academic.gpa && academic.gpa !== 'Not specified' && academic.gpa !== '') completenessScore++;
-          
-          profile.academic = `Level: ${academic.level || 'Not specified'}, Major: ${academic.major || 'Not specified'}, University: ${academic.university || 'Not specified'}, GPA: ${academic.gpa || 'Not specified'}, Graduation Year: ${academic.graduationYear || 'Not specified'}`;
-          if (academic.level || academic.major || academic.university || academic.gpa) {
-            infoProvided.push("academic background");
-          }
+          profile.academic = `${profileData.academic.level || "Not specified"} in ${profileData.academic.major || "Not specified"}`;
+          if (profileData.academic.gpa) profile.academic += ` (GPA: ${profileData.academic.gpa})`;
+          if (profileData.academic.university) profile.academic += ` from ${profileData.academic.university}`;
+          infoProvided.push("academic background");
+          completenessScore++;
         }
         
-        // 🎯 STUDY GOALS - Complete data
+        // 🎯 STUDY GOAL - Complete data
         if (profileData.studyGoal) {
-          const studyGoal = profileData.studyGoal;
-          if (studyGoal.degree && studyGoal.degree !== 'Not specified' && studyGoal.degree !== '') completenessScore++;
-          if (studyGoal.field && studyGoal.field !== 'Not specified' && studyGoal.field !== '') completenessScore++;
-          if (studyGoal.countries && studyGoal.countries.length > 0) completenessScore++;
-          
-          profile.goal = `Target Degree: ${studyGoal.degree || 'Not specified'}, Field: ${studyGoal.field || 'Not specified'}, Intake: ${studyGoal.intakeYear || 'Not specified'}, Countries: ${studyGoal.countries?.join(', ') || 'Not specified'}`;
-          if (studyGoal.degree || studyGoal.field || studyGoal.intakeYear || studyGoal.countries?.length > 0) {
-            infoProvided.push("study goals");
+          profile.goal = `${profileData.studyGoal.degree || "Not specified"} in ${profileData.studyGoal.field || "Not specified"}`;
+          if (profileData.studyGoal.countries && profileData.studyGoal.countries.length > 0) {
+            profile.goal += ` in ${profileData.studyGoal.countries.join(", ")}`;
           }
+          infoProvided.push("study goals");
+          completenessScore++;
         }
         
         // 💰 BUDGET - Complete data
         if (profileData.budget) {
-          const budget = profileData.budget;
-          if (budget.range && budget.range !== 'Not specified' && budget.range !== '') completenessScore++;
-          
-          profile.budget = `Range: ${budget.range || 'Not specified'}, Funding: ${budget.funding || 'Not specified'}`;
-          if (budget.range || budget.funding) {
-            infoProvided.push("budget information");
+          profile.budget = `${profileData.budget.range || "Not specified"} budget`;
+          if (profileData.budget.currency) profile.budget += ` (${profileData.budget.currency})`;
+          infoProvided.push("budget");
+          completenessScore++;
+        }
+        
+        // 📝 EXAMS - Complete data
+        if (profileData.standardizedTests) {
+          const exams = [];
+          if (profileData.standardizedTests.ielts) {
+            exams.push(`IELTS: ${profileData.standardizedTests.ielts}`);
+          }
+          if (profileData.standardizedTests.toefl) {
+            exams.push(`TOEFL: ${profileData.standardizedTests.toefl}`);
+          }
+          if (profileData.standardizedTests.gre) {
+            const gre = profileData.standardizedTests.gre;
+            exams.push(`GRE: ${gre.verbal || "N/A"}/${gre.quantitative || "N/A"}/${gre.analytical || "N/A"}`);
+          }
+          if (profileData.standardizedTests.gmat) {
+            const gmat = profileData.standardizedTests.gmat;
+            exams.push(`GMAT: ${gmat.verbal || "N/A"}/${gre.quantitative || "N/A"}/${gmat.analytical || "N/A"}`);
+          }
+          if (exams.length > 0) {
+            profile.exams = exams.join(", ");
+            infoProvided.push("exam scores");
+            completenessScore++;
           }
         }
         
-        // 📝 STANDARDIZED TESTS - Complete data
-        const testScores = [];
-        if (profileData.ieltsTaken) {
-          testScores.push(`IELTS: ${profileData.ieltsScore?.overall || 'Not specified'}`);
-          infoProvided.push("IELTS score");
-          completenessScore++;
-        }
-        if (profileData.toeflTaken) {
-          testScores.push(`TOEFL: ${profileData.toeflScore?.total || 'Not specified'}`);
-          infoProvided.push("TOEFL score");
-          completenessScore++;
-        }
-        if (profileData.greTaken) {
-          testScores.push(`GRE: ${profileData.greScore?.total || 'Not specified'}`);
-          infoProvided.push("GRE score");
-          completenessScore++;
-        }
-        if (profileData.gmatTaken) {
-          testScores.push(`GMAT: ${profileData.gmatScore?.total || 'Not specified'}`);
-          infoProvided.push("GMAT score");
-          completenessScore++;
-        }
-        profile.exams = testScores.length > 0 ? testScores.join(', ') : "Not provided";
-        
-        // 📚 EXPERIENCE - Complete data
-        const experienceInfo = [];
-        if (profileData.workExperience && profileData.workExperience !== '') {
-          experienceInfo.push(`Work: ${profileData.workExperience}`);
+        // 💼 WORK EXPERIENCE - Complete data
+        if (profileData.workExperience) {
+          profile.experience = `${profileData.workExperience.years || "Not specified"} years of experience`;
+          if (profileData.workExperience.company) profile.experience += ` at ${profileData.workExperience.company}`;
+          if (profileData.workExperience.position) profile.experience += ` as ${profileData.workExperience.position}`;
           infoProvided.push("work experience");
           completenessScore++;
         }
-        if (profileData.researchExperience && profileData.researchExperience !== '') {
-          experienceInfo.push(`Research: ${profileData.researchExperience}`);
-          infoProvided.push("research experience");
-        }
-        if (profileData.publications && profileData.publications !== '') {
-          experienceInfo.push(`Publications: ${profileData.publications}`);
-          infoProvided.push("publications");
-        }
-        if (profileData.certifications && profileData.certifications !== '') {
-          experienceInfo.push(`Certifications: ${profileData.certifications}`);
-          infoProvided.push("certifications");
-        }
-        profile.experience = experienceInfo.length > 0 ? experienceInfo.join(', ') : "Not provided";
         
-        // 📄 APPLICATION READINESS - Complete data
+        // 📄 APPLICATION STATUS - Complete data
         const applicationStatus = [];
-        if (profileData.sopStatus && profileData.sopStatus !== '') {
-          applicationStatus.push(`SOP: ${profileData.sopStatus}`);
-          infoProvided.push("SOP status");
-          completenessScore++;
-        }
-        if (profileData.lorStatus && profileData.lorStatus !== '') {
-          applicationStatus.push(`LOR: ${profileData.lorStatus}`);
-          infoProvided.push("LOR status");
-        }
-        if (profileData.resumeStatus && profileData.resumeStatus !== '') {
-          applicationStatus.push(`Resume: ${profileData.resumeStatus}`);
-          infoProvided.push("Resume status");
-        }
-        if (profileData.resumeStatus) {
-          applicationStatus.push(`Resume: ${profileData.resumeStatus}`);
-          infoProvided.push("Resume status");
+        if (profileData.applicationReadiness) {
+          if (profileData.applicationReadiness.sop) applicationStatus.push("SOP");
+          if (profileData.applicationReadiness.lor) applicationStatus.push("LOR");
+          if (profileData.applicationReadiness.resume) applicationStatus.push("Resume");
+          if (profileData.applicationReadiness.transcripts) applicationStatus.push("Transcripts");
         }
         profile.applications = applicationStatus.length > 0 ? applicationStatus.join(', ') : "Not provided";
+        if (applicationStatus.length > 0) infoProvided.push("application materials");
         
         // 🏛️ UNIVERSITY STATUS - Complete data
         const shortlistedCount = profileData.shortlistedUniversities?.length || 0;
@@ -335,7 +295,7 @@ export const aiCounsellor = async (req, res) => {
           );
           
           if (isShortlisted) {
-            // Force LOCK_UNIVERSITY action
+            // Force lock action
             aiResponse.action = "LOCK_UNIVERSITY";
             aiResponse.actionableNextSteps = [{
               text: "Lock Carnegie Mellon University",
@@ -668,7 +628,6 @@ export const aiCounsellor = async (req, res) => {
         }
 
         if (parsed.action === "LOCK_UNIVERSITY" && parsed.universityName) {
-          // Find university by name
           const university = await University.findOne({ name: parsed.universityName });
           if (university) {
             const profile = await Profile.findOne({ userId: req.user._id });
@@ -688,26 +647,34 @@ export const aiCounsellor = async (req, res) => {
             }
           }
         }
-        
-        if (shortlistedResults.length > 0) {
-          await profile.save();
-          console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
-          parsed.autoShortlistedResults = shortlistedResults;
-        }
+      } catch (actionError) {
+        console.error("Error processing AI action:", actionError);
       }
-  } catch (actionError) {
-    console.error("Error processing AI action:", actionError);
-    // Don't fail the whole request if action processing fails
-  }
+    }
 
-  // Return the response
-  try {
-    return res.json(parsed);
-  } catch (responseError) {
-    console.error("Error sending response:", responseError);
-    // Send a simple fallback response if the main response fails
-    return res.json({
-      message: "I'm here to help with your study abroad journey.",
+    // Return the response
+    try {
+      return res.json(parsed);
+    } catch (responseError) {
+      console.error("Error sending response:", responseError);
+      return res.json({
+        message: "I'm here to help with your study abroad journey.",
+        profileAssessment: {
+          academics: "Average",
+          internships: "None",
+          readiness: "Medium"
+        },
+        collegeRecommendations: [],
+        action: "NONE",
+        task: null,
+        autoShortlisted: []
+      });
+    }
+  } catch (error) {
+    console.error("AI Counsellor Error:", error);
+    return res.status(500).json({
+      message: "I'm experiencing technical difficulties. Please try again.",
+      error: "AI service temporarily unavailable",
       profileAssessment: {
         academics: "Average",
         internships: "None",
@@ -719,22 +686,7 @@ export const aiCounsellor = async (req, res) => {
       autoShortlisted: []
     });
   }
-} catch (error) {
-  console.error("AI Counsellor Error:", error);
-  return res.status(500).json({
-    message: "I'm experiencing technical difficulties. Please try again.",
-    error: "AI service temporarily unavailable",
-    profileAssessment: {
-      academics: "Average",
-      internships: "None",
-      readiness: "Medium"
-    },
-    collegeRecommendations: [],
-    action: "NONE",
-    task: null,
-    autoShortlisted: []
-  });
-}
+};
 
 // Fallback AI response generator when API fails
 function generateFallbackAIResponse(context, aiText = null) {
@@ -755,35 +707,36 @@ function generateFallbackAIResponse(context, aiText = null) {
     nextSteps: ["Complete your profile", "Research universities", "Prepare required documents"],
     action: "NONE",
     task: null,
-    universityName: null
+    universityName: null,
+    autoShortlisted: []
   };
 }
 
 function generateContextualResponse(context) {
   const { userName, userStage, profile, userMessage } = context;
   
-  if (userStage === "ONBOARDING") {
-    return `Hi ${userName || 'Student'}! I see you're just getting started. Let me help you complete your profile first so I can provide personalized guidance. Please finish the onboarding process, and then I can give you specific university recommendations and application advice.`;
+  if (userMessage.toLowerCase().includes("hello") || userMessage.toLowerCase().includes("hi")) {
+    return `Hello ${userName}! I'm your AI study abroad counsellor. How can I help you today?`;
+  }
+  
+  if (userMessage.toLowerCase().includes("profile")) {
+    return `Based on your profile, I can see you have ${profile.academic}. Let me help you improve your profile for better university admissions.`;
   }
   
   if (userMessage.toLowerCase().includes("university") || userMessage.toLowerCase().includes("college")) {
-    return `Based on your profile, I'd recommend researching universities that match your academic background. Since you're interested in universities, have you considered what field of study you'd like to pursue? This will help me give you more targeted recommendations.`;
+    return "I can help you find the perfect universities! Let me analyze your profile and recommend the best options for you.";
   }
   
-  if (userMessage.toLowerCase().includes("help") || userMessage.toLowerCase().includes("guidance")) {
-    return `I'm here to guide you through your study-abroad journey! Based on your current stage (${userStage}), I can help you with university selection, application preparation, and document requirements. What specific aspect would you like to focus on first?`;
-  }
-  
-  return `Hello ${userName || 'Student'}! I'm your AI study-abroad counsellor. I can help you with university selection, application guidance, and document preparation. Based on your profile, I see you're at the ${userStage} stage. What would you like to know about studying abroad?`;
+  return "I'm here to help you with your study abroad journey. What would you like to know about?";
 }
 
 function generateCollegeRecommendations(profile, shortlistedUniversities) {
   const recommendations = [
     {
       category: "TARGET",
-      name: "University of Texas at Austin",
-      country: "USA",
-      rank: "#50-100",
+      name: "University of Washington",
+      country: "USA", 
+      rank: "#50-70",
       field: "Engineering & Business",
       internshipScore: "Medium",
       acceptanceProbability: "Medium",
