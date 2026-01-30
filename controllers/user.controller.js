@@ -203,6 +203,12 @@ export const getCurrentUser = async (req, res) => {
       .populate("shortlistedUniversities.universityId")
       .populate("lockedUniversity.universityId");
     
+    console.log("=== USER PROFILE DEBUG ===");
+    console.log("Profile found:", !!profile);
+    console.log("Shortlisted universities count:", profile?.shortlistedUniversities?.length || 0);
+    console.log("First shortlisted university:", profile?.shortlistedUniversities?.[0]);
+    console.log("Populated university name:", profile?.shortlistedUniversities?.[0]?.universityId?.name);
+    
     // Calculate profile strength
     const profileStrength = await calculateProfileStrength(user);
     
