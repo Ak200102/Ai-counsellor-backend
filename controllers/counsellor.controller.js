@@ -19,34 +19,27 @@ export const saveConversation = async (req, res) => {
     if (!conversation) {
       conversation = new Conversation({ userId, messages: [] });
     }
-    
-    // Add new messages that aren't already saved
-    for (const message of messages) {
-      // Check if message already exists (by content and approximate timestamp)
-      const exists = conversation.messages.some(existing => 
-        existing.content === message.content && 
-        existing.role === message.role &&
-        Math.abs(new Date(existing.timestamp) - new Date(message.timestamp || Date.now())) < 5000 // 5 second tolerance
-      );
-      
-      if (!exists) {
+
+    // Add new messages
+    if (Array.isArray(messages)) {
+      messages.forEach(msg => {
         conversation.messages.push({
-          role: message.role,
-          content: message.content,
-          timestamp: message.timestamp || new Date()
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp || Date.now())
         });
-      }
+      });
     }
-    
+
     // Keep only last 50 messages
     if (conversation.messages.length > 50) {
       conversation.messages = conversation.messages.slice(-50);
     }
-    
+
     conversation.lastUpdated = new Date();
     await conversation.save();
-    
-    res.json({ 
+
+    res.json({
       message: "Conversation saved successfully",
       messagesSaved: messages.length,
       totalMessages: conversation.messages.length
@@ -54,6 +47,24 @@ export const saveConversation = async (req, res) => {
   } catch (error) {
     console.error("Error saving conversation:", error);
     res.status(500).json({ message: "Failed to save conversation" });
+  }
+};
+
+export const deleteConversationHistory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Delete the conversation for this user
+    const result = await Conversation.deleteOne({ userId });
+    
+    if (result.deletedCount > 0) {
+      res.json({ message: "Chat history deleted successfully" });
+    } else {
+      res.json({ message: "No chat history found to delete" });
+    }
+  } catch (error) {
+    console.error("Error deleting conversation:", error);
+    res.status(500).json({ message: "Failed to delete chat history" });
   }
 };
 
