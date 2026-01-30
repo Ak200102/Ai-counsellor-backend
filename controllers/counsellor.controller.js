@@ -146,16 +146,23 @@ export const aiCounsellor = async (req, res) => {
       exams: "Not provided",
       experience: "Not provided",
       applications: "Not provided",
-      universities: "Not provided"
+      universities: "Not provided",
+      isComplete: false
     };
 
     let infoProvided = [];
+    let completenessScore = 0;
+    const maxScore = 6; // academic, goal, budget, exams, experience, applications
 
     try {
       if (profileData) {
         // 🎓 ACADEMIC BACKGROUND - Complete data
         if (profileData.academic) {
           const academic = profileData.academic;
+          if (academic.level && academic.level !== 'Not specified' && academic.level !== '') completenessScore++;
+          if (academic.major && academic.major !== 'Not specified' && academic.major !== '') completenessScore++;
+          if (academic.gpa && academic.gpa !== 'Not specified' && academic.gpa !== '') completenessScore++;
+          
           profile.academic = `Level: ${academic.level || 'Not specified'}, Major: ${academic.major || 'Not specified'}, University: ${academic.university || 'Not specified'}, GPA: ${academic.gpa || 'Not specified'}, Graduation Year: ${academic.graduationYear || 'Not specified'}`;
           if (academic.level || academic.major || academic.university || academic.gpa) {
             infoProvided.push("academic background");
@@ -165,6 +172,10 @@ export const aiCounsellor = async (req, res) => {
         // 🎯 STUDY GOALS - Complete data
         if (profileData.studyGoal) {
           const studyGoal = profileData.studyGoal;
+          if (studyGoal.degree && studyGoal.degree !== 'Not specified' && studyGoal.degree !== '') completenessScore++;
+          if (studyGoal.field && studyGoal.field !== 'Not specified' && studyGoal.field !== '') completenessScore++;
+          if (studyGoal.countries && studyGoal.countries.length > 0) completenessScore++;
+          
           profile.goal = `Target Degree: ${studyGoal.degree || 'Not specified'}, Field: ${studyGoal.field || 'Not specified'}, Intake: ${studyGoal.intakeYear || 'Not specified'}, Countries: ${studyGoal.countries?.join(', ') || 'Not specified'}`;
           if (studyGoal.degree || studyGoal.field || studyGoal.intakeYear || studyGoal.countries?.length > 0) {
             infoProvided.push("study goals");
@@ -174,6 +185,8 @@ export const aiCounsellor = async (req, res) => {
         // 💰 BUDGET - Complete data
         if (profileData.budget) {
           const budget = profileData.budget;
+          if (budget.range && budget.range !== 'Not specified' && budget.range !== '') completenessScore++;
+          
           profile.budget = `Range: ${budget.range || 'Not specified'}, Funding: ${budget.funding || 'Not specified'}`;
           if (budget.range || budget.funding) {
             infoProvided.push("budget information");
@@ -185,36 +198,41 @@ export const aiCounsellor = async (req, res) => {
         if (profileData.ieltsTaken) {
           testScores.push(`IELTS: ${profileData.ieltsScore?.overall || 'Not specified'}`);
           infoProvided.push("IELTS score");
+          completenessScore++;
         }
         if (profileData.toeflTaken) {
           testScores.push(`TOEFL: ${profileData.toeflScore?.total || 'Not specified'}`);
           infoProvided.push("TOEFL score");
+          completenessScore++;
         }
         if (profileData.greTaken) {
           testScores.push(`GRE: ${profileData.greScore?.total || 'Not specified'}`);
           infoProvided.push("GRE score");
+          completenessScore++;
         }
         if (profileData.gmatTaken) {
           testScores.push(`GMAT: ${profileData.gmatScore?.total || 'Not specified'}`);
           infoProvided.push("GMAT score");
+          completenessScore++;
         }
         profile.exams = testScores.length > 0 ? testScores.join(', ') : "Not provided";
         
         // 📚 EXPERIENCE - Complete data
         const experienceInfo = [];
-        if (profileData.workExperience) {
+        if (profileData.workExperience && profileData.workExperience !== '') {
           experienceInfo.push(`Work: ${profileData.workExperience}`);
           infoProvided.push("work experience");
+          completenessScore++;
         }
-        if (profileData.researchExperience) {
+        if (profileData.researchExperience && profileData.researchExperience !== '') {
           experienceInfo.push(`Research: ${profileData.researchExperience}`);
           infoProvided.push("research experience");
         }
-        if (profileData.publications) {
+        if (profileData.publications && profileData.publications !== '') {
           experienceInfo.push(`Publications: ${profileData.publications}`);
           infoProvided.push("publications");
         }
-        if (profileData.certifications) {
+        if (profileData.certifications && profileData.certifications !== '') {
           experienceInfo.push(`Certifications: ${profileData.certifications}`);
           infoProvided.push("certifications");
         }
@@ -222,13 +240,18 @@ export const aiCounsellor = async (req, res) => {
         
         // 📄 APPLICATION READINESS - Complete data
         const applicationStatus = [];
-        if (profileData.sopStatus) {
+        if (profileData.sopStatus && profileData.sopStatus !== '') {
           applicationStatus.push(`SOP: ${profileData.sopStatus}`);
           infoProvided.push("SOP status");
+          completenessScore++;
         }
-        if (profileData.lorStatus) {
+        if (profileData.lorStatus && profileData.lorStatus !== '') {
           applicationStatus.push(`LOR: ${profileData.lorStatus}`);
           infoProvided.push("LOR status");
+        }
+        if (profileData.resumeStatus && profileData.resumeStatus !== '') {
+          applicationStatus.push(`Resume: ${profileData.resumeStatus}`);
+          infoProvided.push("Resume status");
         }
         if (profileData.resumeStatus) {
           applicationStatus.push(`Resume: ${profileData.resumeStatus}`);
@@ -244,8 +267,8 @@ export const aiCounsellor = async (req, res) => {
           infoProvided.push("university status");
         }
         
-        console.log("Enhanced profile data:", profile);
-        console.log("Info provided:", infoProvided);
+        // Determine if profile is complete (at least 4 out of 6 key areas)
+        profile.isComplete = completenessScore >= 4;
       }
     } catch (profileError) {
       console.error("Error processing profile data:", profileError);
