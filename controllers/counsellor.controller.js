@@ -387,9 +387,20 @@ export const aiCounsellor = async (req, res) => {
     if (!parsed.action) parsed.action = "NONE";
     if (!parsed.autoShortlisted) parsed.autoShortlisted = [];
 
+    // Force explicit lock requests
+    const isLockRequest = typeof message === "string" && /\block\b/i.test(message);
+    if (isLockRequest) {
+      const lockMatch = message.match(/\block\b\s+(.*)$/i);
+      const lockTarget = lockMatch && lockMatch[1] ? lockMatch[1].trim() : null;
+      if (lockTarget) {
+        parsed.action = "LOCK_UNIVERSITY";
+        parsed.universityName = lockTarget;
+      }
+    }
+
     // Force recommendations when user explicitly asks for universities
     const isRecommendationRequest = typeof message === "string" && /recommend|suggest|universit|college|collage/i.test(message);
-    if (isRecommendationRequest && parsed.collegeRecommendations.length === 0) {
+    if (!isLockRequest && isRecommendationRequest && parsed.collegeRecommendations.length === 0) {
       const availableUniversities = await University.find({}, "name rank location programs").sort({ rank: 1 }).limit(20);
       if (availableUniversities.length > 0) {
         const topFive = availableUniversities.slice(0, 5);
