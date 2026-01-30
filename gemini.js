@@ -224,6 +224,9 @@ ONLY show collegeRecommendations when:
 
 RULE 4: BE CONCISE - MAX 2 SENTENCES
 Keep responses very short. No long explanations.
+DO NOT include JSON objects in your message.
+DO NOT show debug information or structured data.
+Only provide natural language responses.
 
 RULE 5: EXECUTE ACTIONS IMMEDIATELY
 - CREATE_TASK: Must include task object with title and reason

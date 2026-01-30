@@ -306,6 +306,21 @@ export const aiCounsellor = async (req, res) => {
     try {
       aiText = await geminiResponse(context);
       
+      // Clean up AI response - remove JSON objects and debug info
+      aiText = aiText
+        .replace(/\{[^}]*"title"[^}]*\}/g, '') // Remove task JSON objects
+        .replace(/\{[^}]*"universityId"[^}]*\}/g, '') // Remove university JSON objects
+        .replace(/\{[^}]*"universityName"[^}]*\}/g, '') // Remove university name JSON
+        .replace(/\[[^\]]*"universityId"[^\]]*\]/g, '') // Remove university arrays
+        .replace(/\[[^\]]*"category"[^\]]*\]/g, '') // Remove category arrays
+        .replace(/Here's a task for you:/g, '') // Remove task introduction
+        .replace(/Here are the shortlisted universities:/g, '') // Remove university list intro
+        .replace(/Please let me know how I can assist you further\./g, '') // Remove closing
+        .replace(/\n\n+/g, '\n\n') // Fix excessive line breaks
+        .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
+        .replace(/\[[^\]]*\]/g, '') // Remove any remaining arrays
+        .trim();
+      
       // OVERRIDE: If user explicitly asks to lock a university, force LOCK_UNIVERSITY action
       if (message.toLowerCase().includes('lock')) {
         try {
