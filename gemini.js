@@ -178,7 +178,24 @@ const geminiResponse = async (context) => {
       : "";
 
     const prompt = `
-�🔥🔥🔥 IMMEDIATE RULES - FOLLOW EXACTLY OR FAIL 🔥🔥🔥
+�🎓 UNIVERSITY RECOMMENDATION GUIDELINES - CRITICAL 🎓
+When recommending universities, you MUST provide DIVERSE options based on:
+- User's specific field of study (Computer Science, Engineering, Business, etc.)
+- User's academic level (Bachelor's, Master's, PhD)
+- User's preferred countries from profile
+- User's GPA and test scores for appropriate tiering
+- Include mix of DREAM, TARGET, and SAFE universities
+- DO NOT always recommend MIT/Stanford/CMU - provide variety
+- Consider different universities for different profiles
+
+Examples of diverse universities to consider:
+- US: MIT, Stanford, Berkeley, CMU, UIUC, UW, Northeastern, Georgia Tech, UT Austin, Purdue
+- UK: Oxford, Cambridge, Imperial College, UCL, Edinburgh
+- Canada: Toronto, Waterloo, UBC, McGill
+- Australia: Melbourne, Sydney, UNSW
+- Europe: ETH Zurich, TU Munich, KTH
+
+🔥🔥🔥 IMMEDIATE RULES - FOLLOW EXACTLY OR FAIL 🔥🔥🔥
 
 RULE 1: ABSOLUTELY NO COLLEGE CARDS FOR GENERAL QUESTIONS
 If user asks ANYTHING except explicit college recommendations:
@@ -502,21 +519,32 @@ Example 2 - User with incomplete profile (profile.isComplete is false) asks "rec
 
 Example 3 - User with complete profile asks "recommend colleges":
 {
-  "message": "I recommend MIT, Stanford, and Carnegie Mellon for your profile.",
+  "message": "Based on your Computer Science background and goals, I recommend diverse universities across different tiers.",
   "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
   "collegeRecommendations": [
     {"name": "MIT", "category": "DREAM"},
-    {"name": "Stanford", "category": "DREAM"},
-    {"name": "Carnegie Mellon", "category": "TARGET"}
+    {"name": "University of California, Berkeley", "category": "DREAM"},
+    {"name": "University of Illinois Urbana-Champaign", "category": "TARGET"},
+    {"name": "University of Washington", "category": "TARGET"},
+    {"name": "Northeastern University", "category": "SAFE"}
   ],
   "action": "AUTO_SHORTLIST_MULTIPLE",
   "task": null,
   "autoShortlisted": [
     {"name": "MIT", "category": "DREAM"},
-    {"name": "Stanford", "category": "DREAM"},
-    {"name": "Carnegie Mellon", "category": "TARGET"}
+    {"name": "University of California, Berkeley", "category": "DREAM"},
+    {"name": "University of Illinois Urbana-Champaign", "category": "TARGET"},
+    {"name": "University of Washington", "category": "TARGET"},
+    {"name": "Northeastern University", "category": "SAFE"}
   ]
 }
+
+IMPORTANT: Provide diverse university recommendations based on:
+- User's field of study and academic level
+- Target countries (US, UK, Canada, Australia, etc.)
+- Mix of Dream, Target, and Safe universities
+- Include universities beyond just MIT/Stanford/CMU
+- Consider user's GPA and test scores for appropriate tiering
 
 Example 3 - User asks "create task":
 {
