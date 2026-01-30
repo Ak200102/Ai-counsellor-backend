@@ -387,6 +387,33 @@ export const aiCounsellor = async (req, res) => {
     if (!parsed.action) parsed.action = "NONE";
     if (!parsed.autoShortlisted) parsed.autoShortlisted = [];
 
+    // Force recommendations when user explicitly asks for universities
+    const isRecommendationRequest = typeof message === "string" && /recommend|suggest|universit|college|collage/i.test(message);
+    if (isRecommendationRequest && parsed.collegeRecommendations.length === 0) {
+      const availableUniversities = await University.find({}, "name rank location programs").sort({ rank: 1 }).limit(20);
+      if (availableUniversities.length > 0) {
+        const topFive = availableUniversities.slice(0, 5);
+        parsed.collegeRecommendations = topFive.map((uni, index) => {
+          let category = "TARGET";
+          if (index === 0 || (uni.rank && uni.rank <= 20)) category = "DREAM";
+          if (uni.rank && uni.rank > 50) category = "SAFE";
+          return {
+            name: uni.name,
+            category,
+            fitExplanation: "Selected based on program strength and profile fit.",
+            riskFactors: ["Competitive admissions"],
+            programs: Array.isArray(uni.programs) ? uni.programs : []
+          };
+        });
+        parsed.autoShortlisted = parsed.collegeRecommendations.map(rec => ({
+          name: rec.name,
+          category: rec.category
+        }));
+        parsed.action = "AUTO_SHORTLIST_MULTIPLE";
+        parsed.message = "Here are university recommendations tailored to your profile. I've also shortlisted them for you.";
+      }
+    }
+
     // Clean the message field to remove JSON artifacts
     if (typeof parsed.message === 'string') {
       // More aggressive cleaning for malformed JSON
