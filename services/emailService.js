@@ -15,14 +15,11 @@ export const sendOTPEmail = async (email, otp, userName) => {
     subject: "Verify your email",
     html: `
       <h2>AI Counsellor</h2>
-      <p>Hello ${userName},</p>
-      <p>Your OTP is:</p>
+      <p>Hello ${userName}</p>
       <h1>${otp}</h1>
-      <p>This OTP is valid for 10 minutes.</p>
+      <p>Valid for 10 minutes</p>
     `,
   });
-
-  return { success: true };
 };
 
-export default { sendOTPEmail };
+export default { sendOTPEmail }
