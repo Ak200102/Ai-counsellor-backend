@@ -574,16 +574,21 @@ Example 4 - User asks "lock [University Name]":
 
 JSON Response Format:
 {
-  "message": "Your response to the student",
+  "message": "Your natural language response to the student",
   "profileAssessment": {
     "academics": "Strong|Average|Weak",
     "internships": "Excellent|Good|Basic|None", 
     "readiness": "High|Medium|Low"
   },
-  "collegeRecommendations": [], // EMPTY for general questions, FILLED for college requests
-  "action": "NONE|CREATE_TASK|AUTO_SHORTLIST_MULTIPLE|SHORTLIST_UNIVERSITY|LOCK_UNIVERSITY",
-  "task": {"title": "Task title", "reason": "Why important"},
-  "autoShortlisted": [{"name": "University", "category": "DREAM|TARGET|SAFE"}]
+  "collegeRecommendations": [
+    {"name": "University Name", "category": "DREAM|TARGET|SAFE"}
+  ],
+  "action": "CREATE_TASK|SHORTLIST_UNIVERSITY|LOCK_UNIVERSITY|AUTO_SHORTLIST_MULTIPLE|NONE",
+  "task": {"title": "Task title", "reason": "Task reason"},
+  "universityName": "University name if action is SHORTLIST_UNIVERSITY or LOCK_UNIVERSITY",
+  "autoShortlisted": [
+    {"name": "University Name", "category": "DREAM|TARGET|SAFE"}
+  ]
 }
 
 🚨 CRITICAL: Keep responses under 100 characters. Be direct and actionable.
