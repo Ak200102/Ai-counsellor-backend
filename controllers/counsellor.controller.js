@@ -597,6 +597,26 @@ export const aiCounsellor = async (req, res) => {
               await profile.save();
               console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
               parsed.autoShortlistedResults = shortlistedResults;
+
+              if (!parsed.taskCreated) {
+                const shortlistNames = shortlistedResults.map(item => item.name).join(", ");
+                const newTask = new Task({
+                  userId: req.user._id,
+                  title: "Review and compare shortlisted universities",
+                  description: `Evaluate your shortlisted universities: ${shortlistNames}. Focus on program fit, tuition, location, and admission requirements.`,
+                  status: "NOT_STARTED",
+                  priority: "HIGH",
+                  category: "APPLICATION",
+                  relatedStage: user.stage,
+                  createdBy: "AI"
+                });
+                await newTask.save();
+                parsed.taskCreated = {
+                  taskId: newTask._id,
+                  title: newTask.title
+                };
+                console.log("Auto-created task for shortlist review:", newTask.title);
+              }
             }
           }
         }
@@ -605,8 +625,10 @@ export const aiCounsellor = async (req, res) => {
           console.log("=== SHORTLIST UNIVERSITY ACTION ===");
           console.log("University name from AI:", parsed.universityName);
           
-          // Find university by name
-          const university = await University.findOne({ name: parsed.universityName });
+          // Find university by name (case-insensitive)
+          const university = await University.findOne({
+            name: { $regex: new RegExp(parsed.universityName, "i") }
+          });
           console.log("Found university:", university);
           
           if (university) {
@@ -659,10 +681,12 @@ export const aiCounsellor = async (req, res) => {
         }
 
         if (parsed.action === "LOCK_UNIVERSITY" && parsed.universityName) {
-          const university = await University.findOne({ name: parsed.universityName });
+          const university = await University.findOne({
+            name: { $regex: new RegExp(parsed.universityName, "i") }
+          });
           if (university) {
             const profile = await Profile.findOne({ userId: req.user._id });
-            if (profile && profile.shortlistedUniversities.length >= 3) {
+            if (profile) {
               profile.lockedUniversity = {
                 universityId: university._id,
                 lockedAt: new Date()
