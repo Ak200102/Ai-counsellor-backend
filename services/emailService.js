@@ -60,6 +60,8 @@ export const sendOTPEmail = async (email, otp, userName) => {
     console.log("📧 Gmail User configured:", !!process.env.GMAIL_USER);
     console.log("📧 Gmail Password configured:", !!process.env.GMAIL_PASSWORD);
     console.log("📧 Transporter available:", !!transporter);
+    console.log("📧 Gmail User value:", process.env.GMAIL_USER);
+    console.log("📧 Gmail Password length:", process.env.GMAIL_PASSWORD?.length || 0);
     
     // If transporter is not available, log to console (for development)
     if (!transporter) {
