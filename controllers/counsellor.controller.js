@@ -123,14 +123,16 @@ export const aiCounsellor = async (req, res) => {
     user.lastAIRequestTime = new Date();
     await user.save();
 
-    console.log("Fetching profile data...");
     // Get user's profile data
     let profileData;
     try {
       profileData = await Profile.findOne({ userId: req.user._id });
-      console.log("Profile data found:", profileData ? "Yes" : "No");
+      console.log("Profile data found for user", req.user._id, ":", profileData ? "Yes" : "No");
       if (profileData) {
-        console.log("Raw profile data:", JSON.stringify(profileData, null, 2));
+        console.log("Profile keys:", Object.keys(profileData));
+        console.log("Has academic:", !!profileData.academic);
+        console.log("Has studyGoal:", !!profileData.studyGoal);
+        console.log("Has budget:", !!profileData.budget);
       }
     } catch (profileError) {
       console.error("Error fetching profile data:", profileError);

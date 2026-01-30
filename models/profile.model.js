@@ -31,13 +31,15 @@ const profileSchema = new mongoose.Schema(
     greScore: { 
       total: { type: String, default: "" },
       verbal: { type: String, default: "" },
-      quantitative: { type: String, default: "" }
+      quantitative: { type: String, default: "" },
+      analytical: { type: String, default: "" }
     },
     gmatTaken: { type: Boolean, default: false },
     gmatScore: { 
       total: { type: String, default: "" },
       verbal: { type: String, default: "" },
-      quantitative: { type: String, default: "" }
+      quantitative: { type: String, default: "" },
+      analytical: { type: String, default: "" }
     },
 
     // Additional Academic Info
