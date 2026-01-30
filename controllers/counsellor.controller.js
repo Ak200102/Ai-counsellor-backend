@@ -454,7 +454,7 @@ export const aiCounsellor = async (req, res) => {
     });
 
     // Save AI response to conversation history (extract message from parsed JSON)
-    const aiMessage = parsed.message || parsed.response || JSON.stringify(parsed);
+    const aiMessage = parsed.message || parsed.response || "AI response processed";
     conversation.messages.push({
       role: "assistant",
       content: aiMessage,
@@ -473,7 +473,8 @@ export const aiCounsellor = async (req, res) => {
       console.log("Conversation saved successfully");
     } catch (saveError) {
       console.error("Error saving conversation:", saveError);
-      // Continue even if conversation save fails
+      // Don't fail the entire request if conversation save fails
+      // Just log the error and continue
     }
 
     // Mark AI counselling as completed for first-time users
@@ -687,18 +688,53 @@ export const aiCounsellor = async (req, res) => {
             }
           }
         }
-      } catch (actionError) {
-        console.error("Error processing AI action:", actionError);
-        // Don't fail the whole request if action processing fails
+        
+        if (shortlistedResults.length > 0) {
+          await profile.save();
+          console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
+          parsed.autoShortlistedResults = shortlistedResults;
+        }
       }
-    }
-
-    res.json(parsed);
-  } catch (error) {
-    console.error("Counsellor controller error:", error.message, error.stack);
-    res.status(500).json({ message: error.message || "Failed to get AI response. Please try again." });
+  } catch (actionError) {
+    console.error("Error processing AI action:", actionError);
+    // Don't fail the whole request if action processing fails
   }
-};
+
+  // Return the response
+  try {
+    return res.json(parsed);
+  } catch (responseError) {
+    console.error("Error sending response:", responseError);
+    // Send a simple fallback response if the main response fails
+    return res.json({
+      message: "I'm here to help with your study abroad journey.",
+      profileAssessment: {
+        academics: "Average",
+        internships: "None",
+        readiness: "Medium"
+      },
+      collegeRecommendations: [],
+      action: "NONE",
+      task: null,
+      autoShortlisted: []
+    });
+  }
+} catch (error) {
+  console.error("AI Counsellor Error:", error);
+  return res.status(500).json({
+    message: "I'm experiencing technical difficulties. Please try again.",
+    error: "AI service temporarily unavailable",
+    profileAssessment: {
+      academics: "Average",
+      internships: "None",
+      readiness: "Medium"
+    },
+    collegeRecommendations: [],
+    action: "NONE",
+    task: null,
+    autoShortlisted: []
+  });
+}
 
 // Fallback AI response generator when API fails
 function generateFallbackAIResponse(context, aiText = null) {
