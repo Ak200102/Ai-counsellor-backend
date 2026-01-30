@@ -45,7 +45,6 @@ export const googleAuthFailure = (req, res) => {
 export const requestSignupOTP = async (req, res) => {
   try {
     const { email, name, password } = req.body;
-    console.log("Received signup request:", { email, name, password: "***" });
 
     if (!email || !name || !password) {
       return res.status(400).json({ message: "Email, name, and password required" });
@@ -75,23 +74,14 @@ export const requestSignupOTP = async (req, res) => {
     });
 
     // Send OTP email
-    try {
-      await sendOTPEmail(email, otp, name);
-      console.log("📧 OTP email sent successfully");
-    } catch (emailError) {
-      console.error("❌ Failed to send OTP email:", emailError);
-      console.log("📧 OTP logged to console as fallback");
-    }
+    await sendOTPEmail(email, otp, name);
 
-    // Always return OTP for debugging (remove in production!)
     res.status(200).json({
       message: "OTP sent to your email",
       email,
-      expiresIn: "10 minutes",
-      otp: otp // Include OTP for testing
+      expiresIn: "10 minutes"
     });
   } catch (error) {
-    console.error("Signup OTP request error:", error.message || error);
     res.status(500).json({ message: error.message || "Failed to send OTP" });
   }
 };
@@ -130,7 +120,7 @@ export const verifySignupOTP = async (req, res) => {
     // Create user with temp data
     const user = await User.create({
       name: otpRecord.tempData.name,
-      email: otpRecord.email, // Use email from OTP record, not tempData
+      email: otpRecord.email,
       password: otpRecord.tempData.password
     });
 
@@ -147,7 +137,6 @@ export const verifySignupOTP = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Signup OTP verification error:", error);
     
     // Handle specific errors
     if (error.code === 11000) {
