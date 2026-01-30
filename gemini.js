@@ -163,47 +163,49 @@
 import axios from "axios";
 import University from "./models/university.model.js";
 
-const geminiResponse = async (context) => {
+export default async function geminiResponse(context) {
+  console.log("=== GEMINI RESPONSE FUNCTION CALLED ===");
+  console.log("Context received:", context.userMessage);
+  
+  const {
+    userName = "Student",
+    userStage = "ONBOARDING",
+    profile = {},
+    shortlistedUniversities = [],
+    lockedUniversity = null,
+    userMessage = "",
+    alreadyProvidedInfo = "",
+    conversationHistory = []
+  } = context;
+
+  // Fetch all universities to get their IDs
+  let universities = [];
   try {
-    const {
-      userName = "Student",
-      userStage = "ONBOARDING",
-      profile = {},
-      shortlistedUniversities = [],
-      lockedUniversity = null,
-      userMessage = "",
-      alreadyProvidedInfo = "",
-      conversationHistory = []
-    } = context;
+    const universityData = await University.find({}, 'name country ranking program _id');
+    universities = universityData;
+    console.log("Fetched universities from database:", universities.length);
+    console.log("Sample universities:", universities.slice(0, 3).map(u => u.name));
+  } catch (error) {
+    console.error("Failed to fetch universities:", error);
+  }
 
-    // Fetch all universities to get their IDs
-    let universities = [];
-    try {
-      const universityData = await University.find({}, 'name country ranking program _id');
-      universities = universityData;
-      console.log("Fetched universities from database:", universities.length);
-      console.log("Sample universities:", universities.slice(0, 3).map(u => u.name));
-    } catch (error) {
-      console.error("Failed to fetch universities:", error);
-    }
+  // Build conversation context from history
+  const conversationContext = conversationHistory.length > 0
+    ? `\n────────────────────────────\nPREVIOUS CONVERSATION CONTEXT\n────────────────────────────\n` + 
+      conversationHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'You'}: ${msg.content}`).join('\n\n') +
+      `\n────────────────────────────\n`
+    : "";
 
-    // Build conversation context from history
-    const conversationContext = conversationHistory.length > 0
-      ? `\n────────────────────────────\nPREVIOUS CONVERSATION CONTEXT\n────────────────────────────\n` + 
-        conversationHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'You'}: ${msg.content}`).join('\n\n') +
-        `\n────────────────────────────\n`
-      : "";
+  // Build universities context for AI
+  const universitiesContext = universities.length > 0
+    ? `\n────────────────────────────\nAVAILABLE UNIVERSITIES IN DATABASE\n────────────────────────────\n` +
+      universities.map(uni => 
+        `- ${uni.name} (${uni.country || 'Location not specified'})${uni.ranking ? ` - Rank: ${uni.ranking}` : ''}${uni.program ? ` - Programs: ${uni.program}` : ''}`
+      ).join('\n') +
+      `\n────────────────────────────\n`
+    : "\nNo universities available in database.\n";
 
-    // Build universities context for AI
-    const universitiesContext = universities.length > 0
-      ? `\n────────────────────────────\nAVAILABLE UNIVERSITIES IN DATABASE\n────────────────────────────\n` +
-        universities.map(uni => 
-          `- ${uni.name} (${uni.country || 'Location not specified'})${uni.ranking ? ` - Rank: ${uni.ranking}` : ''}${uni.program ? ` - Programs: ${uni.program}` : ''}`
-        ).join('\n') +
-        `\n────────────────────────────\n`
-      : "\nNo universities available in database.\n";
-
-    const prompt = `
+  const prompt = `
 🚨🚨🚨 CRITICAL: COMPLETE JSON ONLY - NO EXCEPTIONS 🚨🚨🚨
 YOU MUST respond with a SINGLE, COMPLETE, VALID JSON object.
 NEVER include incomplete fields like ,"profileAssessment":, ,"collegeRecommendations":, etc.
