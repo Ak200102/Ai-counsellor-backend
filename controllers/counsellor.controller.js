@@ -483,8 +483,57 @@ export const aiCounsellor = async (req, res) => {
             const shortlistedResults = [];
             
             for (const uniData of parsed.autoShortlisted) {
-              const university = await University.findOne({ name: uniData.name });
+              let university = await University.findOne({ name: uniData.name });
               console.log(`Processing ${uniData.name}:`, university ? "Found" : "Not found");
+              
+              // If university doesn't exist, create it
+              if (!university) {
+                console.log(`Creating new university: ${uniData.name}`);
+                
+                // Determine rank based on category
+                let rank = 100; // Default rank
+                if (uniData.category === "DREAM") {
+                  rank = Math.floor(Math.random() * 20) + 1; // 1-20 for dream
+                } else if (uniData.category === "TARGET") {
+                  rank = Math.floor(Math.random() * 30) + 21; // 21-50 for target
+                } else {
+                  rank = Math.floor(Math.random() * 50) + 51; // 51-100 for safe
+                }
+                
+                // Determine location based on university name patterns
+                let location = "United States";
+                let description = `A leading ${uniData.category.toLowerCase()} university offering excellent programs in various fields.`;
+                
+                if (uniData.name.includes("UK") || uniData.name.includes("Oxford") || uniData.name.includes("Cambridge") || uniData.name.includes("London") || uniData.name.includes("Edinburgh")) {
+                  location = "United Kingdom";
+                } else if (uniData.name.includes("Canada") || uniData.name.includes("Toronto") || uniData.name.includes("Waterloo") || uniData.name.includes("McGill")) {
+                  location = "Canada";
+                } else if (uniData.name.includes("Australia") || uniData.name.includes("Melbourne") || uniData.name.includes("Sydney")) {
+                  location = "Australia";
+                } else if (uniData.name.includes("Europe") || uniData.name.includes("Zurich") || uniData.name.includes("Munich")) {
+                  location = "Europe";
+                }
+                
+                university = new University({
+                  name: uniData.name,
+                  location: location,
+                  description: description,
+                  rank: rank,
+                  image: `https://via.placeholder.com/400x300?text=${encodeURIComponent(uniData.name)}`,
+                  programs: ["Computer Science", "Engineering", "Business", "Data Science"],
+                  tuition: {
+                    domestic: "$30,000 - $50,000",
+                    international: "$40,000 - $60,000"
+                  },
+                  requirements: {
+                    gpa: "3.0+",
+                    english: "IELTS 6.5+ / TOEFL 90+"
+                  }
+                });
+                
+                await university.save();
+                console.log(`Created university: ${university.name} with ID: ${university._id}`);
+              }
               
               if (university) {
                 // Check if already shortlisted
