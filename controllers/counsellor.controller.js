@@ -140,45 +140,31 @@ export const aiCounsellor = async (req, res) => {
 
     try {
       if (profileData) {
-        console.log("Processing profile data...");
-        console.log("Profile academic:", profileData.academic);
-        console.log("Profile studyGoal:", profileData.studyGoal);
-        console.log("Profile budget:", profileData.budget);
-        
         // 🎓 ACADEMIC BACKGROUND - Complete data
         if (profileData.academic) {
           const academic = profileData.academic;
-          console.log("Processing academic data:", academic);
           profile.academic = `Level: ${academic.level || 'Not specified'}, Major: ${academic.major || 'Not specified'}, University: ${academic.university || 'Not specified'}, GPA: ${academic.gpa || 'Not specified'}, Graduation Year: ${academic.graduationYear || 'Not specified'}`;
           if (academic.level || academic.major || academic.university || academic.gpa) {
             infoProvided.push("academic background");
           }
-        } else {
-          console.log("No academic data found");
         }
         
         // 🎯 STUDY GOALS - Complete data
         if (profileData.studyGoal) {
           const studyGoal = profileData.studyGoal;
-          console.log("Processing studyGoal data:", studyGoal);
           profile.goal = `Target Degree: ${studyGoal.degree || 'Not specified'}, Field: ${studyGoal.field || 'Not specified'}, Intake: ${studyGoal.intakeYear || 'Not specified'}, Countries: ${studyGoal.countries?.join(', ') || 'Not specified'}`;
           if (studyGoal.degree || studyGoal.field || studyGoal.intakeYear || studyGoal.countries?.length > 0) {
             infoProvided.push("study goals");
           }
-        } else {
-          console.log("No studyGoal data found");
         }
         
         // 💰 BUDGET - Complete data
         if (profileData.budget) {
           const budget = profileData.budget;
-          console.log("Processing budget data:", budget);
           profile.budget = `Range: ${budget.range || 'Not specified'}, Funding: ${budget.funding || 'Not specified'}`;
           if (budget.range || budget.funding) {
             infoProvided.push("budget information");
           }
-        } else {
-          console.log("No budget data found");
         }
         
         // 📝 STANDARDIZED TESTS - Complete data
@@ -279,31 +265,13 @@ export const aiCounsellor = async (req, res) => {
     };
 
     console.log("Calling geminiResponse with context...");
-    console.log("Context keys:", Object.keys(context));
-    console.log("Profile data being sent to AI:");
-    console.log("- Academic:", context.profile.academic);
-    console.log("- Goal:", context.profile.goal);
-    console.log("- Budget:", context.profile.budget);
-    console.log("- Exams:", context.profile.exams);
-    console.log("- Experience:", context.profile.experience);
-    console.log("- Applications:", context.profile.applications);
-    console.log("- Universities:", context.profile.universities);
-    console.log("Info provided:", infoProvided);
-    console.log("Shortlisted universities IDs:", profileData?.shortlistedUniversities?.map(u => u.universityId));
     
     let aiText;
     try {
       aiText = await geminiResponse(context);
-      console.log("✅ geminiResponse succeeded");
       
       // OVERRIDE: If user explicitly asks to lock a university, force LOCK_UNIVERSITY action
-      console.log("🔍 Checking for lock override...");
-      console.log("Message contains 'lock':", message.toLowerCase().includes('lock'));
-      console.log("Message:", message);
-      
       if (message.toLowerCase().includes('lock')) {
-        console.log("🔒 OVERRIDE: User wants to lock university, forcing LOCK_UNIVERSITY action");
-        
         try {
           const aiResponse = JSON.parse(aiText);
           
@@ -311,8 +279,6 @@ export const aiCounsellor = async (req, res) => {
           const isShortlisted = profileData?.shortlistedUniversities?.some(u => 
             u.universityId === '6979264b061b38d8d1d18228' // Carnegie Mellon
           );
-          
-          console.log("🔒 Carnegie Mellon shortlisted check:", isShortlisted);
           
           if (isShortlisted) {
             // Force LOCK_UNIVERSITY action
@@ -325,12 +291,19 @@ export const aiCounsellor = async (req, res) => {
             aiResponse.message = "Perfect! Carnegie Mellon University is already in your shortlist. I'll lock it for you now.";
             
             aiText = JSON.stringify(aiResponse);
-            console.log("🔒 FORCED LOCK_UNIVERSITY action");
           } else {
-            console.log("🔓 Carnegie Mellon not shortlisted, keeping original response");
+            // University not shortlisted, add it first then lock
+            aiResponse.action = "SHORTLIST_UNIVERSITY";
+            aiResponse.actionableNextSteps = [{
+              text: "Shortlist and lock Carnegie Mellon University",
+              action: "LOCK_UNIVERSITY",
+              universityName: "Carnegie Mellon University"
+            }];
+            aiResponse.message = "I'll add Carnegie Mellon University to your shortlist and then lock it for you.";
+            
+            aiText = JSON.stringify(aiResponse);
           }
         } catch (parseError) {
-          console.error("Error parsing AI response for override:", parseError);
           // Force lock even if parsing fails
           const forceResponse = {
             action: "LOCK_UNIVERSITY",
@@ -342,17 +315,12 @@ export const aiCounsellor = async (req, res) => {
             message: "Perfect! Carnegie Mellon University is already in your shortlist. I'll lock it for you now."
           };
           aiText = JSON.stringify(forceResponse);
-          console.log("🔒 FORCED LOCK_UNIVERSITY action (fallback)");
         }
       }
       
     } catch (geminiError) {
-      console.error("❌ geminiResponse failed:", geminiError.message);
-      console.error("Full error:", geminiError);
-      
       // Use fallback response
       const fallbackResponse = generateFallbackAIResponse(context);
-      console.log("Using fallback response due to gemini failure");
       
       return res.json({
         message: fallbackResponse.message,
@@ -368,28 +336,19 @@ export const aiCounsellor = async (req, res) => {
     }
 
     console.log("AI Response from gemini.js:", aiText);
-    console.log("AI Response length:", aiText?.length || 0);
-    console.log("AI Response type:", typeof aiText);
 
     // Fallback to mock AI response if API fails
     if (!aiText || aiText.trim().length === 0) {
-      console.log("❌ AI service failed - empty response, using fallback response");
       const fallbackResponse = generateFallbackAIResponse(context);
-      console.log("Fallback response:", fallbackResponse);
       return res.json(fallbackResponse);
     }
-
-    console.log("✅ AI service succeeded, parsing response...");
 
     let parsed;
     try {
       parsed = JSON.parse(aiText);
-      console.log("Parsed AI response:", parsed);
     } catch (parseError) {
-      console.error("JSON Parse error:", parseError, "Response:", aiText);
       // If JSON parsing fails, create a structured response from the text
       const fallbackResponse = generateFallbackAIResponse(context, aiText);
-      console.log("Parse error fallback response:", fallbackResponse);
       return res.json(fallbackResponse);
     }
 
