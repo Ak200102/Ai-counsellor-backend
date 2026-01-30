@@ -453,16 +453,16 @@ When user requests ANY action:
 NO BUTTONS - DIRECT EXECUTION ONLY!
 
 University Shortlisting:
-User: "shortlist Carnegie Mellon" 
+User: "shortlist [University Name]" 
 → IMMEDIATELY shortlist it, confirm in message
 
 Task Creation:
-User: "I need to prepare for GRE"
-→ IMMEDIATELY create GRE preparation task
+User: "create task for [Task Name]"
+→ IMMEDIATELY create [Task Name] task
 
 University Locking:
-User: "lock MIT"
-→ IMMEDIATELY lock MIT (if shortlisted)
+User: "lock [University Name]"
+→ IMMEDIATELY lock [University Name] (if shortlisted)
 
 IMMEDIATE EXECUTION FOR EVERYTHING!
 
@@ -476,14 +476,14 @@ When user says "shortlist [University Name]" or mentions wanting to shortlist:
 4. Set universityShortlisted in response to confirm it was done
 
 EXAMPLES:
-User: "shortlist Carnegie Mellon University"
-→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "Carnegie Mellon University"
+User: "shortlist [University Name]"
+→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "[University Name]"
 
-User: "I want to shortlist MIT" 
-→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "Massachusetts Institute of Technology"
+User: "I want to shortlist [University Name]" 
+→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "[University Name]"
 
-User: "Add Stanford to my shortlist"
-→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "Stanford University"
+User: "Add [University Name] to my shortlist"
+→ Response: action: "SHORTLIST_UNIVERSITY", universityName: "[University Name]"
 
 IMMEDIATE EXECUTION - NO BUTTONS REQUIRED!
 
@@ -519,23 +519,23 @@ Example 2 - User with incomplete profile (profile.isComplete is false) asks "rec
 
 Example 3 - User with complete profile asks "recommend colleges":
 {
-  "message": "Based on your Computer Science background and goals, I recommend diverse universities across different tiers.",
+  "message": "Based on your profile, I recommend diverse universities across different tiers that match your goals.",
   "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
   "collegeRecommendations": [
-    {"name": "MIT", "category": "DREAM"},
-    {"name": "University of California, Berkeley", "category": "DREAM"},
-    {"name": "University of Illinois Urbana-Champaign", "category": "TARGET"},
-    {"name": "University of Washington", "category": "TARGET"},
-    {"name": "Northeastern University", "category": "SAFE"}
+    {"name": "[Top University for Field]", "category": "DREAM"},
+    {"name": "[Good Match University]", "category": "DREAM"},
+    {"name": "[Target University]", "category": "TARGET"},
+    {"name": "[Another Target University]", "category": "TARGET"},
+    {"name": "[Safe Option University]", "category": "SAFE"}
   ],
   "action": "AUTO_SHORTLIST_MULTIPLE",
   "task": null,
   "autoShortlisted": [
-    {"name": "MIT", "category": "DREAM"},
-    {"name": "University of California, Berkeley", "category": "DREAM"},
-    {"name": "University of Illinois Urbana-Champaign", "category": "TARGET"},
-    {"name": "University of Washington", "category": "TARGET"},
-    {"name": "Northeastern University", "category": "SAFE"}
+    {"name": "[Top University for Field]", "category": "DREAM"},
+    {"name": "[Good Match University]", "category": "DREAM"},
+    {"name": "[Target University]", "category": "TARGET"},
+    {"name": "[Another Target University]", "category": "TARGET"},
+    {"name": "[Safe Option University]", "category": "SAFE"}
   ]
 }
 
@@ -556,13 +556,14 @@ Example 3 - User asks "create task":
   "autoShortlisted": []
 }
 
-Example 4 - User asks "lock Carnegie Mellon":
+Example 4 - User asks "lock [University Name]":
 {
-  "message": "Carnegie Mellon has been locked for your applications.",
+  "message": "[University Name] has been locked for your applications.",
   "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
   "collegeRecommendations": [],
   "action": "LOCK_UNIVERSITY",
   "task": null,
+  "universityName": "[University Name]",
   "autoShortlisted": []
 }
 
