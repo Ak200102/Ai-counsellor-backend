@@ -43,6 +43,13 @@ NO text before or after the JSON object.
 NO incomplete JSON syntax.
 NO mixing natural language with JSON.
 
+IMPORTANT: For questions about "tell me about my profile" or "what should I focus/do next", you MUST:
+1. Use the actual Shortlisted Universities data provided in the context
+2. Mention specific university names from the shortlisted list
+3. Provide personalized guidance based on their actual profile data
+4. DO NOT give generic responses like "I'm here to help with your study abroad journey"
+5. Reference their specific academic details, goals, and shortlisted universities
+
 WHEN USER ASKS FOR UNIVERSITY RECOMMENDATIONS:
 - MUST provide collegeRecommendations array with exactly 5 universities
 - MUST include action: "AUTO_SHORTLIST_MULTIPLE"
@@ -57,6 +64,7 @@ WHEN USER ASKS "What should I focus on now?" or similar guidance questions:
 - MUST provide actionable next steps based on their actual situation
 - Example: "Based on your profile, you should focus on reviewing your shortlisted universities: University of Cambridge, University of Manchester, etc."
 - DO NOT trigger any auto-actions, just provide guidance
+- IMPORTANT: Look at the "Shortlisted Universities" field in the context and mention those specific universities
 
 WHEN USER ASKS "Tell me about my profile" or similar profile questions:
 - MUST provide specific details from their actual profile data
@@ -145,6 +153,17 @@ RESPONSE FORMAT (STRICT JSON):
 
     try {
       const parsedResponse = JSON.parse(content);
+      
+      // Debug logging for profile/guidance questions
+      if (userMessage.toLowerCase().includes("tell me about my profile") || 
+          userMessage.toLowerCase().includes("what should i focus") ||
+          userMessage.toLowerCase().includes("what should i do")) {
+        console.log("=== PROFILE/GUIDANCE QUESTION DEBUG ===");
+        console.log("User Message:", userMessage);
+        console.log("Shortlisted Universities in context:", shortlistedUniversities);
+        console.log("AI Response:", parsedResponse);
+        console.log("AI Message:", parsedResponse.message);
+      }
 
       if (parsedResponse.collegeRecommendations && Array.isArray(parsedResponse.collegeRecommendations)) {
         parsedResponse.collegeRecommendations = parsedResponse.collegeRecommendations.map(college => {
@@ -162,7 +181,11 @@ RESPONSE FORMAT (STRICT JSON):
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       return JSON.stringify({
-        message: "I'm here to help with your study abroad journey.",
+        message: userMessage.toLowerCase().includes("tell me about my profile") 
+          ? `Based on your profile, you are a ${profile?.academic?.level || 'student'} studying ${profile?.academic?.major || 'your field'} with goals to pursue ${profile?.studyGoal?.degree || 'higher education'} in ${profile?.studyGoal?.field || 'your field'}. You have ${shortlistedUniversities?.length || 0} universities shortlisted: ${shortlistedUniversities?.map(u => u.universityId?.name || u.name || 'Unknown').join(', ') || 'None'}.`
+          : userMessage.toLowerCase().includes("what should i focus") || userMessage.toLowerCase().includes("what should i do")
+          ? `Based on your current progress, you should focus on reviewing your ${shortlistedUniversities?.length || 0} shortlisted universities: ${shortlistedUniversities?.map(u => u.universityId?.name || u.name || 'Unknown').join(', ') || 'None'}. ${profile?.academic?.gpa ? `With your GPA of ${profile.academic.gpa}, ` : ''}you should compare admission requirements and prepare your application materials.`
+          : "I'm here to help with your study abroad journey.",
         profileAssessment: { academics: "Average", internships: "None", readiness: "Medium" },
         collegeRecommendations: [],
         decisionGuidance: null,
