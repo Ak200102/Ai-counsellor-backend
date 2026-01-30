@@ -46,14 +46,19 @@ export const sendOTPEmail = async (email, otp, userName) => {
     // Initialize transporter on first use (when env vars are loaded)
     initializeTransporter();
     
+    console.log("📧 Attempting to send OTP email...");
+    console.log("📧 Gmail User configured:", !!process.env.GMAIL_USER);
+    console.log("📧 Gmail Password configured:", !!process.env.GMAIL_PASSWORD);
+    console.log("📧 Transporter available:", !!transporter);
+    
     // If transporter is not available, log to console (for development)
     if (!transporter) {
-      console.log("\n🔐 OTP FOR TESTING:");
+      console.log("\n🔐 OTP FOR TESTING (EMAIL SERVICE NOT CONFIGURED):");
       console.log(`Email: ${email}`);
       console.log(`User: ${userName}`);
       console.log(`OTP: ${otp}`);
       console.log(`Expires: 10 minutes\n`);
-      return { success: true, message: "OTP logged to console (dev mode)" };
+      return { success: true, message: "OTP logged to console (email service not configured)" };
     }
 
     const mailOptions = {

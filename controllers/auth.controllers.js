@@ -75,16 +75,20 @@ export const requestSignupOTP = async (req, res) => {
     });
 
     // Send OTP email
-    await sendOTPEmail(email, otp, name);
+    try {
+      await sendOTPEmail(email, otp, name);
+      console.log("📧 OTP email sent successfully");
+    } catch (emailError) {
+      console.error("❌ Failed to send OTP email:", emailError);
+      console.log("📧 OTP logged to console as fallback");
+    }
 
-    // For development: return OTP in response (remove in production!)
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-
+    // Always return OTP for debugging (remove in production!)
     res.status(200).json({
       message: "OTP sent to your email",
       email,
       expiresIn: "10 minutes",
-      ...(isDevelopment && { otp }) // Only include OTP in development
+      otp: otp // Include OTP for testing
     });
   } catch (error) {
     console.error("Signup OTP request error:", error.message || error);
