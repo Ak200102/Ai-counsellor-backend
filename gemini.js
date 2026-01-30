@@ -495,9 +495,9 @@ User: "suggest me some colleges"
   "collegeRecommendations": [...],
   "action": "AUTO_SHORTLIST_MULTIPLE",
   "autoShortlisted": [
-    {"name": "Carnegie Mellon University", "category": "DREAM"},
-    {"name": "University of Washington", "category": "TARGET"},
-    {"name": "UC San Diego", "category": "SAFE"}
+    {"name": "[Dynamic University 1]", "category": "DREAM"},
+    {"name": "[Dynamic University 2]", "category": "TARGET"},
+    {"name": "[Dynamic University 3]", "category": "SAFE"}
   ]
 }
 
@@ -586,49 +586,49 @@ Example 1 - User asks "How is my profile?":
 
 Example 2 - User with complete profile asks "recommend universities":
 {
-  "message": "Based on your strong Computer Science background and 3.8 GPA, I recommend diverse universities. MIT and Stanford are dream schools with exceptional CS programs but very competitive. UC Berkeley and UIUC offer excellent target options with strong industry connections. Northeastern provides a safe choice with great co-op programs.",
+  "message": "Based on your strong academic background, I recommend diverse universities tailored to your profile. I've selected dream schools with exceptional programs, target options with strong industry connections, and safe choices with great acceptance rates.",
   "profileAnalysis": {
     "academicStrength": "Exceptional",
     "experienceLevel": "Good",
-    "profileGaps": [],
-    "readinessScore": "High",
-    "nextSteps": ["Apply to dream schools", "Prepare strong application essays"]
+    "profileGaps": ["Limited internship experience", "No research publications", "GRE scores not provided"],
+    "readinessScore": "Medium",
+    "nextSteps": ["Gain internship experience", "Take GRE exam", "Get research experience"]
   },
   "profileAssessment": {"academics": "Exceptional", "internships": "Good", "readiness": "High"},
   "collegeRecommendations": [
     {
-      "name": "MIT",
+      "name": "[Dynamic Dream University 1]",
       "category": "DREAM",
-      "fitExplanation": "World-class CS program, perfect match for your technical abilities and research interests",
-      "riskFactors": ["Extremely competitive (3% acceptance)", "Requires exceptional research experience"],
-      "programs": ["Computer Science", "Artificial Intelligence", "Robotics"]
+      "fitExplanation": "World-class program, perfect match for your technical abilities and research interests",
+      "riskFactors": ["Extremely competitive", "Requires exceptional research experience"],
+      "programs": ["Computer Science", "Engineering", "Data Science"]
     },
     {
-      "name": "UC Berkeley",
-      "category": "TARGET", 
-      "fitExplanation": "Strong CS program with excellent industry connections in Silicon Valley",
-      "riskFactors": ["High competition for CS majors", "Expensive living costs"],
-      "programs": ["Computer Science", "Data Science", "Electrical Engineering"]
+      "name": "[Dynamic Target University 1]",
+      "category": "TARGET",
+      "fitExplanation": "Strong program with good industry connections and reasonable admission requirements",
+      "riskFactors": ["Moderate competition", "Requires strong application"],
+      "programs": ["Computer Science", "Engineering"]
     },
     {
-      "name": "Northeastern University",
+      "name": "[Dynamic Safe University 1]",
       "category": "SAFE",
-      "fitExplanation": "Strong co-op program provides valuable work experience",
-      "riskFactors": ["Lower ranking than target schools", "Weather considerations"],
-      "programs": ["Computer Science", "Cybersecurity", "Data Science"]
+      "fitExplanation": "Good program with high acceptance rate and practical experience opportunities",
+      "riskFactors": ["Lower ranking", "Limited research opportunities"],
+      "programs": ["Computer Science", "Information Technology"]
     }
   ],
   "decisionGuidance": {
-    "keyFactors": ["Program reputation", "Industry connections", "Cost considerations", "Location preferences"],
-    "tradeoffs": ["Prestige vs acceptance probability", "Cost vs career opportunities"],
-    "recommendations": ["Apply to mix of dream, target, and safe schools", "Consider co-op programs for experience"]
+    "keyFactors": ["GPA strength", "Experience gap", "Target university tier"],
+    "tradeoffs": ["Strong academics vs limited experience"],
+    "recommendations": ["Focus on mid-tier universities while building experience"]
   },
   "action": "AUTO_SHORTLIST_MULTIPLE",
   "task": null,
   "autoShortlisted": [
-    {"name": "MIT", "category": "DREAM"},
-    {"name": "UC Berkeley", "category": "TARGET"},
-    {"name": "Northeastern University", "category": "SAFE"}
+    {"name": "[Dynamic Dream University 1]", "category": "DREAM"},
+    {"name": "[Dynamic Target University 1]", "category": "TARGET"},
+    {"name": "[Dynamic Safe University 1]", "category": "SAFE"}
   ]
 }
 
@@ -636,9 +636,10 @@ IMPORTANT: Provide diverse university recommendations based on:
 - User's field of study and academic level
 - Target countries (US, UK, Canada, Australia, etc.)
 - Mix of Dream, Target, and Safe universities
-- Include universities beyond just MIT/Stanford/CMU
+- Include universities from different regions and specializations
 - Consider user's GPA and test scores for appropriate tiering
 - ALWAYS recommend exactly 5 universities (2 DREAM, 2 TARGET, 1 SAFE)
+- Generate universities dynamically based on user profile
 
 Example 3 - User asks "create task":
 {
@@ -783,12 +784,34 @@ Now respond.
           });
         }
 
+        // Ensure the response has a clean message
+        if (!parsedResponse.message || parsedResponse.message.includes('"') || parsedResponse.message.includes(':')) {
+          parsedResponse.message = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance and recommendations.";
+        }
+
         // Return the enhanced response as JSON string
         return JSON.stringify(parsedResponse);
       } catch (parseError) {
-        console.error("Failed to parse or enhance AI response:", parseError);
-        // Return original content if parsing fails
-        return content;
+        console.error("Failed to parse AI response, creating fallback:", parseError);
+        console.error("Original content was:", content);
+        
+        // Create a clean fallback response instead of returning malformed content
+        const fallbackResponse = {
+          message: "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance and recommendations.",
+          profileAssessment: {
+            academics: "Average",
+            internships: "None",
+            readiness: "Medium"
+          },
+          collegeRecommendations: [],
+          decisionGuidance: null,
+          action: "NONE",
+          task: null,
+          universityName: null,
+          autoShortlisted: []
+        };
+        
+        return JSON.stringify(fallbackResponse);
       }
 
     } catch (apiError) {

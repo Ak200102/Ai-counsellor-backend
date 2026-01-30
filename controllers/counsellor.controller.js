@@ -284,53 +284,8 @@ export const aiCounsellor = async (req, res) => {
         .replace(/\[[^\]]*\]/g, '') // Remove any remaining arrays
         .trim();
       
-      // OVERRIDE: If user explicitly asks to lock a university, force LOCK_UNIVERSITY action
-      if (message.toLowerCase().includes('lock')) {
-        try {
-          const aiResponse = JSON.parse(aiText);
-          
-          // Check if Carnegie Mellon is shortlisted
-          const isShortlisted = profileData?.shortlistedUniversities?.some(u => 
-            u.universityId === '6979264b061b38d8d1d18228' // Carnegie Mellon
-          );
-          
-          if (isShortlisted) {
-            // Force lock action
-            aiResponse.action = "LOCK_UNIVERSITY";
-            aiResponse.actionableNextSteps = [{
-              text: "Lock Carnegie Mellon University",
-              action: "LOCK_UNIVERSITY",
-              universityName: "Carnegie Mellon University"
-            }];
-            aiResponse.message = "Perfect! Carnegie Mellon University is already in your shortlist. I'll lock it for you now.";
-            
-            aiText = JSON.stringify(aiResponse);
-          } else {
-            // University not shortlisted, add it first then lock
-            aiResponse.action = "SHORTLIST_UNIVERSITY";
-            aiResponse.actionableNextSteps = [{
-              text: "Shortlist and lock Carnegie Mellon University",
-              action: "LOCK_UNIVERSITY",
-              universityName: "Carnegie Mellon University"
-            }];
-            aiResponse.message = "I'll add Carnegie Mellon University to your shortlist and then lock it for you.";
-            
-            aiText = JSON.stringify(aiResponse);
-          }
-        } catch (parseError) {
-          // Force lock even if parsing fails
-          const forceResponse = {
-            action: "LOCK_UNIVERSITY",
-            actionableNextSteps: [{
-              text: "Lock Carnegie Mellon University",
-              action: "LOCK_UNIVERSITY",
-              universityName: "Carnegie Mellon University"
-            }],
-            message: "Perfect! Carnegie Mellon University is already in your shortlist. I'll lock it for you now."
-          };
-          aiText = JSON.stringify(forceResponse);
-        }
-      }
+      // OVERRIDE: If user explicitly asks to lock a university, let AI handle it naturally
+      // Remove hardcoded university logic - AI should provide dynamic recommendations
       
     } catch (geminiError) {
       // Use fallback response
@@ -404,18 +359,23 @@ export const aiCounsellor = async (req, res) => {
 
     // Clean the message field to remove JSON artifacts
     if (typeof parsed.message === 'string') {
+      // More aggressive cleaning for malformed JSON
       parsed.message = parsed.message
-        .replace(/^,?"/, '') // Remove leading ," or "
-        .replace(/",?$/, '') // Remove trailing ," or "
-        .replace(/,"[^"]+":/g, '') // Remove incomplete JSON fields
-        .replace(/:\s*,/g, '') // Remove empty values
-        .replace(/:\s*}/g, '') // Remove empty values at end
+        .replace(/^[,\s"]*/, '') // Remove leading commas, quotes, spaces
+        .replace(/[,\s"]*$/, '') // Remove trailing commas, quotes, spaces
+        .replace(/,"[^"]*":/g, '') // Remove incomplete JSON fields
+        .replace(/:\s*[,}]/g, '') // Remove empty values before commas or braces
         .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
+        .replace(/"[^"]*":\s*"[^"]*"/g, '') // Remove key-value pairs
+        .replace(/"[^"]*":\s*[^,}]*[,}]/g, '') // Remove key-value pairs with non-string values
+        .replace(/^\s*\{|\}\s*$/g, '') // Remove braces at start/end
+        .replace(/,\s*}/g, '}') // Remove trailing commas before closing brace
+        .replace(/,\s*,/g, ',') // Remove double commas
         .trim();
       
-      // If the message is now empty or just JSON artifacts, provide a default
-      if (!parsed.message || parsed.message.length < 10) {
-        parsed.message = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance.";
+      // If the message is still malformed or too short, provide a default
+      if (!parsed.message || parsed.message.length < 15 || parsed.message.includes(':') || parsed.message.includes('"')) {
+        parsed.message = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance and recommendations.";
       }
     }
 
@@ -435,18 +395,23 @@ export const aiCounsellor = async (req, res) => {
     
     // Clean up the message to remove any JSON artifacts
     if (typeof aiMessage === 'string') {
+      // More aggressive cleaning for malformed JSON
       aiMessage = aiMessage
-        .replace(/^,?"/, '') // Remove leading ," or "
-        .replace(/",?$/, '') // Remove trailing ," or "
-        .replace(/,"[^"]+":/g, '') // Remove incomplete JSON fields
-        .replace(/:\s*,/g, '') // Remove empty values
-        .replace(/:\s*}/g, '') // Remove empty values at end
+        .replace(/^[,\s"]*/, '') // Remove leading commas, quotes, spaces
+        .replace(/[,\s"]*$/, '') // Remove trailing commas, quotes, spaces
+        .replace(/,"[^"]*":/g, '') // Remove incomplete JSON fields
+        .replace(/:\s*[,}]/g, '') // Remove empty values before commas or braces
         .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
+        .replace(/"[^"]*":\s*"[^"]*"/g, '') // Remove key-value pairs
+        .replace(/"[^"]*":\s*[^,}]*[,}]/g, '') // Remove key-value pairs with non-string values
+        .replace(/^\s*\{|\}\s*$/g, '') // Remove braces at start/end
+        .replace(/,\s*}/g, '}') // Remove trailing commas before closing brace
+        .replace(/,\s*,/g, ',') // Remove double commas
         .trim();
       
-      // If the message is now empty or just JSON artifacts, provide a default
-      if (!aiMessage || aiMessage.length < 10) {
-        aiMessage = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance.";
+      // If the message is still malformed or too short, provide a default
+      if (!aiMessage || aiMessage.length < 15 || aiMessage.includes(':') || aiMessage.includes('"')) {
+        aiMessage = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance and recommendations.";
       }
     }
     
@@ -766,40 +731,9 @@ function generateContextualResponse(context) {
 }
 
 function generateCollegeRecommendations(profile, shortlistedUniversities) {
-  const recommendations = [
-    {
-      category: "TARGET",
-      name: "University of Washington",
-      country: "USA", 
-      rank: "#50-70",
-      field: "Engineering & Business",
-      internshipScore: "Medium",
-      acceptanceProbability: "Medium",
-      reason: "Strong programs with good internship opportunities and reasonable admission requirements."
-    },
-    {
-      category: "SAFE",
-      name: "Arizona State University",
-      country: "USA", 
-      rank: "#100-150",
-      field: "Multiple Programs",
-      internshipScore: "High",
-      acceptanceProbability: "High",
-      reason: "Excellent for practical experience with high acceptance rate and strong industry connections."
-    },
-    {
-      category: "DREAM",
-      name: "University of Michigan",
-      country: "USA",
-      rank: "#20-30",
-      field: "Engineering & Computer Science",
-      internshipScore: "High", 
-      acceptanceProbability: "Low",
-      reason: "Top-tier programs with exceptional research opportunities, though highly competitive."
-    }
-  ];
-  
-  return recommendations.slice(0, 3);
+  // Return empty array - AI should provide dynamic recommendations
+  // This function should only be used as fallback when AI completely fails
+  return [];
 }
 
 function generateActionableNextSteps(context) {
