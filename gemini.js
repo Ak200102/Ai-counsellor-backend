@@ -178,7 +178,38 @@ const geminiResponse = async (context) => {
       : "";
 
     const prompt = `
-🚨 CRITICAL RULE - NO COLLEGE RECOMMENDATIONS FOR GENERAL QUESTIONS 🚨
+�🔥🔥🔥 IMMEDIATE RULES - FOLLOW EXACTLY OR FAIL 🔥🔥🔥
+
+RULE 1: NO COLLEGE CARDS FOR PROFILE QUESTIONS
+If user asks "how is my profile", "profile assessment", "am I ready", or ANY profile-related question:
+- collegeRecommendations MUST be [] (EMPTY ARRAY)
+- Create a task for profile improvement
+- Create relevant task if needed
+
+RULE 2: NO COLLEGE CARDS FOR GENERAL QUESTIONS  
+If user asks about: interview, scholarship, visa, career, study tips, personal development:
+- collegeRecommendations MUST be [] (EMPTY ARRAY) 
+- Provide helpful advice
+- Create relevant task if needed
+
+RULE 3: ONLY SHOW COLLEGE CARDS WHEN EXPLICITLY ASKED
+ONLY show collegeRecommendations when user says:
+- "recommend colleges/universities"
+- "suggest universities" 
+- "what colleges should I apply to"
+- "show me universities for [field]"
+- Similar EXPLICIT requests
+
+RULE 4: BE CONCISE - MAX 3-4 SENTENCES
+Keep responses short and direct. No long explanations.
+
+RULE 5: EXECUTE ACTIONS IMMEDIATELY
+- CREATE_TASK: Must include task object with title and reason
+- AUTO_SHORTLIST_MULTIPLE: Must include autoShortlisted array
+- SHORTLIST_UNIVERSITY: Must include universityName
+- LOCK_UNIVERSITY: Must include universityName
+
+�� CRITICAL RULE - NO COLLEGE RECOMMENDATIONS FOR GENERAL QUESTIONS 🚨
 DO NOT show college recommendation cards for:
 - Profile questions ("How is my profile?")
 - Interview preparation 
@@ -434,19 +465,62 @@ When student asks to "lock [University Name]":
 3. IF not shortlisted → Generate SHORTLIST_UNIVERSITY action first
 4. NEVER ask for additional information when student explicitly asks to lock
 5. ALWAYS generate the appropriate action immediately
+
+EXAMPLES - FOLLOW EXACTLY:
+
+Example 1 - User asks "how is my profile":
+{
+  "message": "Your profile is strong with GPA 3.8. Gain internship experience to strengthen it.",
+  "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
+  "collegeRecommendations": [],
+  "action": "CREATE_TASK",
+  "task": {"title": "Gain internship experience", "reason": "Strengthen profile for top universities"},
+  "autoShortlisted": []
+}
+
+Example 2 - User asks "recommend colleges":
+{
+  "message": "I recommend MIT, Stanford, and Carnegie Mellon for your profile.",
+  "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
+  "collegeRecommendations": [
+    {"name": "MIT", "category": "DREAM"},
+    {"name": "Stanford", "category": "DREAM"},
+    {"name": "Carnegie Mellon", "category": "TARGET"}
+  ],
+  "action": "AUTO_SHORTLIST_MULTIPLE",
+  "task": null,
+  "autoShortlisted": [
+    {"name": "MIT", "category": "DREAM"},
+    {"name": "Stanford", "category": "DREAM"},
+    {"name": "Carnegie Mellon", "category": "TARGET"}
+  ]
+}
+
+Example 3 - User asks "lock Carnegie Mellon":
+{
+  "message": "Carnegie Mellon has been locked for your applications.",
+  "profileAssessment": {"academics": "Strong", "internships": "None", "readiness": "Medium"},
+  "collegeRecommendations": [],
+  "action": "LOCK_UNIVERSITY",
+  "task": null,
+  "autoShortlisted": []
+}
+
+JSON Response Format:
+{
+  "message": "Your response to the student",
   "profileAssessment": {
     "academics": "Strong|Average|Weak",
     "internships": "Excellent|Good|Basic|None", 
     "readiness": "High|Medium|Low"
   },
   "collegeRecommendations": [], // EMPTY for general questions, FILLED for college requests
-  "action": "NONE|CREATE_TASK|AUTO_SHORTLIST_MULTIPLE",
+  "action": "NONE|CREATE_TASK|AUTO_SHORTLIST_MULTIPLE|SHORTLIST_UNIVERSITY|LOCK_UNIVERSITY",
   "task": {"title": "Task title", "reason": "Why important"},
   "autoShortlisted": [{"name": "University", "category": "DREAM|TARGET|SAFE"}]
 }
 
-NO BUTTONS - DIRECT EXECUTION ONLY!
-
+🚨 CRITICAL: Keep responses under 100 characters. Be direct and actionable.
 Now respond.
 `;
 
@@ -553,5 +627,4 @@ Now respond.
 };
 
 export default geminiResponse;
-
 
