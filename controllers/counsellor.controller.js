@@ -319,11 +319,12 @@ export const aiCounsellor = async (req, res) => {
     console.log("User stage:", user.stage);
     
     let aiText;
+    let parsed;
     try {
       aiText = await geminiResponse(context);
       
       // Safe JSON extraction - preserves AI intelligence while ensuring valid parsing
-      const parsed = extractJSONSafely(aiText);
+      parsed = extractJSONSafely(aiText);
 
       if (!parsed) {
         // Single fallback only - no generic responses
@@ -338,20 +339,10 @@ export const aiCounsellor = async (req, res) => {
       // Use the safely parsed response directly - no destructive cleaning
       
     } catch (geminiError) {
+      console.error("Gemini API error:", geminiError);
       // Use fallback response
       const fallbackResponse = generateFallbackAIResponse(context);
-      
-      return res.json({
-        message: fallbackResponse.message,
-        response: fallbackResponse.response,
-        collegeRecommendations: fallbackResponse.collegeRecommendations,
-        actionableNextSteps: fallbackResponse.actionableNextSteps,
-        nextSteps: fallbackResponse.nextSteps,
-        action: fallbackResponse.action,
-        task: fallbackResponse.task,
-        universityName: fallbackResponse.universityName,
-        fallback: true
-      });
+      parsed = fallbackResponse;
     }
 
     console.log("AI Response from gemini.js:", aiText);
