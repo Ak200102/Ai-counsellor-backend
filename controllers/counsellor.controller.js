@@ -402,6 +402,23 @@ export const aiCounsellor = async (req, res) => {
     if (!parsed.action) parsed.action = "NONE";
     if (!parsed.autoShortlisted) parsed.autoShortlisted = [];
 
+    // Clean the message field to remove JSON artifacts
+    if (typeof parsed.message === 'string') {
+      parsed.message = parsed.message
+        .replace(/^,?"/, '') // Remove leading ," or "
+        .replace(/",?$/, '') // Remove trailing ," or "
+        .replace(/,"[^"]+":/g, '') // Remove incomplete JSON fields
+        .replace(/:\s*,/g, '') // Remove empty values
+        .replace(/:\s*}/g, '') // Remove empty values at end
+        .replace(/\{[^}]*\}/g, '') // Remove any remaining JSON objects
+        .trim();
+      
+      // If the message is now empty or just JSON artifacts, provide a default
+      if (!parsed.message || parsed.message.length < 10) {
+        parsed.message = "I'm here to help with your study abroad journey. Based on your profile, I can provide personalized guidance.";
+      }
+    }
+
     // Save user message to conversation history
     if (!conversation) {
       conversation = new Conversation({ userId: req.user._id, messages: [] });
