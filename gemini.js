@@ -649,16 +649,23 @@ YOU MUST respond with ONLY valid JSON. NO natural language outside JSON.
 Your ENTIRE response must be a single JSON object starting with { and ending with }
 DO NOT write any text before or after the JSON object
 DO NOT mix natural language with JSON syntax
+DO NOT include incomplete JSON like ,"action": or ,"task":
 FAILURE TO COMPLY WILL BREAK THE SYSTEM
 
-Examples of WRONG responses:
-❌ "Based on your profile, I recommend..., { "action": "CREATE_TASK" }"
+VALID RESPONSE FORMAT:
+{"message": "Your complete response here", "action": "CREATE_TASK", "task": {"title": "Task title", "reason": "Task reason"}}
+
+INVALID RESPONSES (DO NOT DO THIS):
+❌ "Based on your profile..., { "action": "CREATE_TASK" }"
 ❌ "Here's your task: { "task": {...} }"
+❌ {"message": "Partial response", ,"action":, "task":, }
 ❌ "I recommend: { "collegeRecommendations": [...] }"
 
-Examples of CORRECT responses:
-✅ { "message": "Based on your profile, I recommend...", "action": "CREATE_TASK", "task": {...} }
-✅ { "message": "Here are universities for you", "collegeRecommendations": [...], "action": "AUTO_SHORTLIST_MULTIPLE" }
+VALID RESPONSES (DO THIS):
+✅ {"message": "Based on your profile, I recommend...", "action": "CREATE_TASK", "task": {...}}
+✅ {"message": "Here are universities for you", "collegeRecommendations": [...], "action": "AUTO_SHORTLIST_MULTIPLE"}
+
+ALWAYS ensure all JSON fields are complete and properly formatted!
 
 JSON Response Format:
 {

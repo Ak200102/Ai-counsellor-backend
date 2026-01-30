@@ -401,10 +401,46 @@ export const aiCounsellor = async (req, res) => {
     try {
       parsed = JSON.parse(aiText);
     } catch (parseError) {
-      // If JSON parsing fails, create a structured response from the text
-      const fallbackResponse = generateFallbackAIResponse(context, aiText);
-      return res.json(fallbackResponse);
+      console.error("JSON parsing failed:", parseError.message);
+      console.error("Raw AI response:", aiText);
+      
+      // Try to extract JSON from malformed response
+      let extractedJson = null;
+      
+      // Look for JSON object in the response
+      const jsonMatch = aiText.match(/\{[^{}]*"action"[^{}]*\}/);
+      if (jsonMatch) {
+        try {
+          extractedJson = JSON.parse(jsonMatch[0]);
+          console.log("Extracted JSON from malformed response:", extractedJson);
+        } catch (extractError) {
+          console.error("Failed to extract JSON:", extractError.message);
+        }
+      }
+      
+      // If we have extracted JSON, use it; otherwise create fallback
+      if (extractedJson) {
+        parsed = extractedJson;
+      } else {
+        // If JSON parsing fails, create a structured response from the text
+        const fallbackResponse = generateFallbackAIResponse(context, aiText);
+        parsed = fallbackResponse;
+        console.log("Using fallback response due to JSON parsing failure");
+      }
     }
+
+    // Validate and ensure required fields exist
+    if (!parsed.message) parsed.message = "I'm here to help with your study abroad journey.";
+    if (!parsed.profileAssessment) {
+      parsed.profileAssessment = {
+        academics: "Average",
+        internships: "None", 
+        readiness: "Medium"
+      };
+    }
+    if (!parsed.collegeRecommendations) parsed.collegeRecommendations = [];
+    if (!parsed.action) parsed.action = "NONE";
+    if (!parsed.autoShortlisted) parsed.autoShortlisted = [];
 
     // Save user message to conversation history
     if (!conversation) {
