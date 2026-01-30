@@ -640,10 +640,12 @@ export const aiCounsellor = async (req, res) => {
                 await profile.save();
                 console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
                 parsed.autoShortlistedResults = shortlistedResults;
+                // Also set autoShortlisted for frontend compatibility
+                parsed.autoShortlisted = shortlistedResults;
 
-                // Always create a task for shortlisted universities
                 console.log("=== CREATING AUTO TASK FOR SHORTLIST ===");
                 const shortlistNames = shortlistedResults.map(item => item.name).join(", ");
+                console.log("Shortlist names for task:", shortlistNames);
                 const newTask = new Task({
                   userId: req.user._id,
                   title: "Review and compare shortlisted universities",
@@ -654,7 +656,9 @@ export const aiCounsellor = async (req, res) => {
                   relatedStage: user.stage,
                   createdBy: "AI"
                 });
+                console.log("Task object created:", newTask);
                 await newTask.save();
+                console.log("Task saved to database");
                 parsed.taskCreated = {
                   taskId: newTask._id,
                   title: newTask.title
