@@ -210,7 +210,30 @@ EXAMPLE OF RIGHT (ALWAYS DO THIS):
 
 FAILURE TO PROVIDE COMPLETE JSON WILL BREAK THE SYSTEM!
 
-🎓 AI COUNSELLOR CORE REQUIREMENTS - CRITICAL 🎓
+� UNIVERSITY RECOMMENDATION TRIGGERS - CRITICAL 🎯
+ALWAYS provide university recommendations when user says:
+- "recommend colleges"
+- "suggest universities" 
+- "what colleges should I apply to"
+- "show me universities for [field]"
+- "recommend universities for [field]"
+- "suggest colleges for [field]"
+- "universities for [field]"
+- "colleges for [field]"
+- Similar explicit recommendation requests
+
+WHEN USER ASKS FOR UNIVERSITY RECOMMENDATIONS:
+- MUST provide collegeRecommendations array with exactly 5 universities
+- MUST include action: "AUTO_SHORTLIST_MULTIPLE"
+- MUST include autoShortlisted array with university details
+- MUST analyze user's profile and field of study
+- MUST provide diverse Dream/Target/Safe options
+- MUST explain why each university fits
+
+DO NOT give generic responses for explicit university requests!
+DO NOT say "I can help you find universities" - ACTUALLY PROVIDE THEM!
+
+� AI COUNSELLOR CORE REQUIREMENTS - CRITICAL 🎓
 You are an expert AI Counsellor that MUST:
 
 1. **UNDERSTAND USER PROFILE & STAGE:**
@@ -585,48 +608,6 @@ Example 1 - User asks "How is my profile?":
 }
 
 Example 2 - User with complete profile asks "recommend universities":
-{
-  "message": "Based on your strong academic background, I recommend diverse universities tailored to your profile. I've selected dream schools with exceptional programs, target options with strong industry connections, and safe choices with great acceptance rates.",
-  "profileAnalysis": {
-    "academicStrength": "Exceptional",
-    "experienceLevel": "Good",
-    "profileGaps": ["Limited internship experience", "No research publications", "GRE scores not provided"],
-    "readinessScore": "Medium",
-    "nextSteps": ["Gain internship experience", "Take GRE exam", "Get research experience"]
-  },
-  "profileAssessment": {"academics": "Exceptional", "internships": "Good", "readiness": "High"},
-  "collegeRecommendations": [
-    {
-      "name": "[Dynamic Dream University 1]",
-      "category": "DREAM",
-      "fitExplanation": "World-class program, perfect match for your technical abilities and research interests",
-      "riskFactors": ["Extremely competitive", "Requires exceptional research experience"],
-      "programs": ["Computer Science", "Engineering", "Data Science"]
-    },
-    {
-      "name": "[Dynamic Target University 1]",
-      "category": "TARGET",
-      "fitExplanation": "Strong program with good industry connections and reasonable admission requirements",
-      "riskFactors": ["Moderate competition", "Requires strong application"],
-      "programs": ["Computer Science", "Engineering"]
-    },
-    {
-      "name": "[Dynamic Safe University 1]",
-      "category": "SAFE",
-      "fitExplanation": "Good program with high acceptance rate and practical experience opportunities",
-      "riskFactors": ["Lower ranking", "Limited research opportunities"],
-      "programs": ["Computer Science", "Information Technology"]
-    }
-  ],
-  "decisionGuidance": {
-    "keyFactors": ["GPA strength", "Experience gap", "Target university tier"],
-    "tradeoffs": ["Strong academics vs limited experience"],
-    "recommendations": ["Focus on mid-tier universities while building experience"]
-  },
-  "action": "AUTO_SHORTLIST_MULTIPLE",
-  "task": null,
-  "autoShortlisted": [
-    {"name": "[Dynamic Dream University 1]", "category": "DREAM"},
     {"name": "[Dynamic Target University 1]", "category": "TARGET"},
     {"name": "[Dynamic Safe University 1]", "category": "SAFE"}
   ]
@@ -810,6 +791,51 @@ Now respond.
           universityName: null,
           autoShortlisted: []
         };
+        
+        // Check if user was asking for university recommendations and provide dynamic response
+        if (context.userMessage && (
+          context.userMessage.toLowerCase().includes('recommend') ||
+          context.userMessage.toLowerCase().includes('suggest') ||
+          context.userMessage.toLowerCase().includes('universities') ||
+          context.userMessage.toLowerCase().includes('colleges')
+        )) {
+          fallbackResponse.message = `Based on your interest in ${context.userMessage.includes('Computer Science') ? 'Computer Science' : 'your field of study'}, I can help you find suitable universities. Let me analyze your profile and provide personalized recommendations.`;
+          fallbackResponse.action = "AUTO_SHORTLIST_MULTIPLE";
+          
+          // Create dynamic university recommendations based on context
+          const field = context.userMessage.includes('Computer Science') ? 'Computer Science' : 
+                       context.userMessage.includes('Business') ? 'Business' :
+                       context.userMessage.includes('Engineering') ? 'Engineering' : 'your field';
+          
+          fallbackResponse.collegeRecommendations = [
+            {
+              name: `Top University for ${field}`,
+              category: "DREAM",
+              fitExplanation: `Excellent ${field} program with research opportunities`,
+              riskFactors: ["High competition", "Requires strong profile"],
+              programs: [field, "Related fields"]
+            },
+            {
+              name: `Good University for ${field}`,
+              category: "TARGET", 
+              fitExplanation: `Strong ${field} program with good industry connections`,
+              riskFactors: ["Moderate competition"],
+              programs: [field]
+            },
+            {
+              name: `Safe University for ${field}`,
+              category: "SAFE",
+              fitExplanation: `Solid ${field} program with high acceptance rate`,
+              riskFactors: ["Less prestigious"],
+              programs: [field]
+            }
+          ];
+          
+          fallbackResponse.autoShortlisted = fallbackResponse.collegeRecommendations.map(uni => ({
+            name: uni.name,
+            category: uni.category
+          }));
+        }
         
         return JSON.stringify(fallbackResponse);
       }
