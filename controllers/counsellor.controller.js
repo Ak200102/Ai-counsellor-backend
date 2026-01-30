@@ -755,11 +755,11 @@ export const aiCounsellor = async (req, res) => {
     }
 
     console.log("=== FINAL RESPONSE BEING SENT ===");
-    console.log("Action:", response.action);
-    console.log("TaskCreated:", response.taskCreated);
-    console.log("AutoShortlistedResults:", response.autoShortlistedResults);
+    console.log("Action:", parsed.action);
+    console.log("TaskCreated:", parsed.taskCreated);
+    console.log("AutoShortlistedResults:", parsed.autoShortlistedResults);
     
-    res.json(response);
+    res.json(parsed);
   } catch (error) {
     console.error("AI Counsellor Error:", error);
     return res.status(500).json({
