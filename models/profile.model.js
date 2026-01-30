@@ -104,14 +104,14 @@ const profileSchema = new mongoose.Schema(
 
     shortlistedUniversities: [
       {
-        universityId: mongoose.Schema.Types.ObjectId,
+        universityId: { type: mongoose.Schema.Types.ObjectId, ref: "University" },
         category: String,
         addedAt: { type: Date, default: Date.now }
       }
     ],
 
     lockedUniversity: {
-      universityId: mongoose.Schema.Types.ObjectId,
+      universityId: { type: mongoose.Schema.Types.ObjectId, ref: "University" },
       lockedAt: Date
     },
 

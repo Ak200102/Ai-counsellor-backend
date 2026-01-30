@@ -621,7 +621,7 @@ export const aiCounsellor = async (req, res) => {
                   profile.shortlistedUniversities.push({
                     universityId: university._id,
                     category: category,
-                    shortlistedAt: new Date()
+                    addedAt: new Date()
                   });
                   
                   shortlistedResults.push({
@@ -704,7 +704,7 @@ export const aiCounsellor = async (req, res) => {
                 profile.shortlistedUniversities.push({
                   universityId: university._id,
                   category: category,
-                  shortlistedAt: new Date()
+                  addedAt: new Date()
                 });
                 
                 console.log("Profile before save:", profile.shortlistedUniversities.length);
