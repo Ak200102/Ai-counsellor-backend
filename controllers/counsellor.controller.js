@@ -521,6 +521,11 @@ export const aiCounsellor = async (req, res) => {
     // Handle AI-suggested actions
     if (parsed.action && parsed.action !== "NONE") {
       try {
+        console.log("=== HANDLING AI ACTION ===");
+        console.log("Action:", parsed.action);
+        console.log("Task data:", parsed.task);
+        console.log("TaskCreated data:", parsed.taskCreated);
+        
         if (parsed.action === "CREATE_TASK" && parsed.task) {
           const newTask = new Task({
             userId: req.user._id,
@@ -632,11 +637,12 @@ export const aiCounsellor = async (req, res) => {
             }
             
             if (shortlistedResults.length > 0) {
-              await profile.save();
-              console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
-              parsed.autoShortlistedResults = shortlistedResults;
+                await profile.save();
+                console.log(`Auto-shortlisted ${shortlistedResults.length} universities`);
+                parsed.autoShortlistedResults = shortlistedResults;
 
-              if (!parsed.taskCreated) {
+                // Always create a task for shortlisted universities
+                console.log("=== CREATING AUTO TASK FOR SHORTLIST ===");
                 const shortlistNames = shortlistedResults.map(item => item.name).join(", ");
                 const newTask = new Task({
                   userId: req.user._id,
@@ -654,8 +660,8 @@ export const aiCounsellor = async (req, res) => {
                   title: newTask.title
                 };
                 console.log("Auto-created task for shortlist review:", newTask.title);
+                console.log("TaskCreated object set in response:", parsed.taskCreated);
               }
-            }
           }
         }
 
@@ -744,27 +750,16 @@ export const aiCounsellor = async (req, res) => {
         }
       } catch (actionError) {
         console.error("Error processing AI action:", actionError);
+        // Continue without actions if there's an error
       }
     }
 
-    // Return the response
-    try {
-      return res.json(parsed);
-    } catch (responseError) {
-      console.error("Error sending response:", responseError);
-      return res.json({
-        message: "I'm here to help with your study abroad journey.",
-        profileAssessment: {
-          academics: "Average",
-          internships: "None",
-          readiness: "Medium"
-        },
-        collegeRecommendations: [],
-        action: "NONE",
-        task: null,
-        autoShortlisted: []
-      });
-    }
+    console.log("=== FINAL RESPONSE BEING SENT ===");
+    console.log("Action:", response.action);
+    console.log("TaskCreated:", response.taskCreated);
+    console.log("AutoShortlistedResults:", response.autoShortlistedResults);
+    
+    res.json(response);
   } catch (error) {
     console.error("AI Counsellor Error:", error);
     return res.status(500).json({
