@@ -290,22 +290,6 @@ export const aiCounsellor = async (req, res) => {
     console.log("- Universities:", context.profile.universities);
     console.log("Info provided:", infoProvided);
     console.log("Shortlisted universities IDs:", profileData?.shortlistedUniversities?.map(u => u.universityId));
-    console.log("Carnegie Mellon ID should be: 6979264b061b38d8d1d18228");
-    
-    // TEMP DEBUG: Add user message and profile info to message for debugging
-    const debugInfo = `
-🔍 DEBUG INFO:
-User Message: "${message}"
-Profile Data Found: ${profileData ? "YES" : "NO"}
-Academic: ${profile.academic}
-Goal: ${profile.goal}
-Budget: ${profile.budget}
-Exams: ${profile.exams}
-Experience: ${profile.experience}
-Applications: ${profile.applications}
-Universities: ${profile.universities}
-Info Provided: ${infoProvided.join(", ")}
----`;
     
     let aiText;
     try {
@@ -401,11 +385,6 @@ Info Provided: ${infoProvided.join(", ")}
     try {
       parsed = JSON.parse(aiText);
       console.log("Parsed AI response:", parsed);
-      
-      // TEMP DEBUG: Add debug info to message
-      if (parsed.message) {
-        parsed.message = debugInfo + "\n\n" + parsed.message;
-      }
     } catch (parseError) {
       console.error("JSON Parse error:", parseError, "Response:", aiText);
       // If JSON parsing fails, create a structured response from the text
