@@ -797,37 +797,48 @@ Now respond.
           context.userMessage.toLowerCase().includes('recommend') ||
           context.userMessage.toLowerCase().includes('suggest') ||
           context.userMessage.toLowerCase().includes('universities') ||
-          context.userMessage.toLowerCase().includes('colleges')
+          context.userMessage.toLowerCase().includes('colleges') ||
+          context.userMessage.toLowerCase().includes('collage')
         )) {
-          fallbackResponse.message = `Based on your interest in ${context.userMessage.includes('Computer Science') ? 'Computer Science' : 'your field of study'}, I can help you find suitable universities. Let me analyze your profile and provide personalized recommendations.`;
+          // Extract field from user message
+          let field = "your field of study";
+          if (context.userMessage.toLowerCase().includes('computer science') || context.userMessage.toLowerCase().includes('cs')) {
+            field = "Computer Science";
+          } else if (context.userMessage.toLowerCase().includes('business')) {
+            field = "Business";
+          } else if (context.userMessage.toLowerCase().includes('engineering')) {
+            field = "Engineering";
+          } else if (context.userMessage.toLowerCase().includes('medicine') || context.userMessage.toLowerCase().includes('medical')) {
+            field = "Medicine";
+          } else if (context.userMessage.toLowerCase().includes('arts')) {
+            field = "Arts";
+          }
+          
+          fallbackResponse.message = `I'd be happy to recommend universities for ${field}! Let me suggest some excellent options across different categories to give you a balanced selection.`;
           fallbackResponse.action = "AUTO_SHORTLIST_MULTIPLE";
           
-          // Create dynamic university recommendations based on context
-          const field = context.userMessage.includes('Computer Science') ? 'Computer Science' : 
-                       context.userMessage.includes('Business') ? 'Business' :
-                       context.userMessage.includes('Engineering') ? 'Engineering' : 'your field';
-          
+          // Create dynamic university recommendations based on detected field
           fallbackResponse.collegeRecommendations = [
             {
               name: `Top University for ${field}`,
               category: "DREAM",
-              fitExplanation: `Excellent ${field} program with research opportunities`,
-              riskFactors: ["High competition", "Requires strong profile"],
-              programs: [field, "Related fields"]
+              fitExplanation: `Excellent ${field} program with cutting-edge research and industry connections`,
+              riskFactors: ["Highly competitive", "Requires strong academic profile"],
+              programs: [field, "Related specializations"]
             },
             {
               name: `Good University for ${field}`,
               category: "TARGET", 
-              fitExplanation: `Strong ${field} program with good industry connections`,
-              riskFactors: ["Moderate competition"],
-              programs: [field]
+              fitExplanation: `Strong ${field} program with good balance of theory and practical experience`,
+              riskFactors: ["Moderate competition", "Requires solid application"],
+              programs: [field, "Applied specializations"]
             },
             {
               name: `Safe University for ${field}`,
               category: "SAFE",
-              fitExplanation: `Solid ${field} program with high acceptance rate`,
-              riskFactors: ["Less prestigious"],
-              programs: [field]
+              fitExplanation: `Solid ${field} program with high acceptance rate and practical focus`,
+              riskFactors: ["Less prestigious", "Limited research opportunities"],
+              programs: [field, "General studies"]
             }
           ];
           

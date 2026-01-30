@@ -183,19 +183,40 @@ export const aiCounsellor = async (req, res) => {
         // 📝 EXAMS - Complete data
         if (profileData.standardizedTests) {
           const exams = [];
+          
+          // Helper function to safely extract exam values
+          const getExamValue = (value) => {
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number') return value.toString();
+            if (typeof value === 'object' && value !== null) {
+              // Handle nested objects like {score: 7.0, type: "Academic"}
+              if (value.score) return value.score.toString();
+              if (value.value) return value.value.toString();
+              if (value.total) return value.total.toString();
+              return JSON.stringify(value);
+            }
+            return "N/A";
+          };
+          
           if (profileData.standardizedTests.ielts) {
-            exams.push(`IELTS: ${profileData.standardizedTests.ielts}`);
+            exams.push(`IELTS: ${getExamValue(profileData.standardizedTests.ielts)}`);
           }
           if (profileData.standardizedTests.toefl) {
-            exams.push(`TOEFL: ${profileData.standardizedTests.toefl}`);
+            exams.push(`TOEFL: ${getExamValue(profileData.standardizedTests.toefl)}`);
           }
           if (profileData.standardizedTests.gre) {
             const gre = profileData.standardizedTests.gre;
-            exams.push(`GRE: ${gre.verbal || "N/A"}/${gre.quantitative || "N/A"}/${gre.analytical || "N/A"}`);
+            const verbal = getExamValue(gre.verbal || gre.verbalReasoning);
+            const quantitative = getExamValue(gre.quantitative || gre.quantitativeReasoning);
+            const analytical = getExamValue(gre.analytical || gre.analyticalWriting);
+            exams.push(`GRE: ${verbal}/${quantitative}/${analytical}`);
           }
           if (profileData.standardizedTests.gmat) {
             const gmat = profileData.standardizedTests.gmat;
-            exams.push(`GMAT: ${gmat.verbal || "N/A"}/${gre.quantitative || "N/A"}/${gmat.analytical || "N/A"}`);
+            const verbal = getExamValue(gmat.verbal || gmat.verbalReasoning);
+            const quantitative = getExamValue(gmat.quantitative || gmat.quantitativeReasoning);
+            const analytical = getExamValue(gmat.analytical || gmat.analyticalWriting);
+            exams.push(`GMAT: ${verbal}/${quantitative}/${analytical}`);
           }
           if (exams.length > 0) {
             profile.exams = exams.join(", ");
@@ -266,6 +287,10 @@ export const aiCounsellor = async (req, res) => {
     };
 
     console.log("Calling geminiResponse with context...");
+    console.log("User message:", message);
+    console.log("User profile data:", profile);
+    console.log("Profile data from DB:", profileData);
+    console.log("User stage:", user.stage);
     
     let aiText;
     try {
