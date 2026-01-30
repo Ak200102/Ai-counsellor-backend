@@ -737,6 +737,8 @@ export const aiCounsellor = async (req, res) => {
                 name: university.name,
                 stage: "PREPARING_APPLICATIONS"
               };
+              // Override message with lock confirmation
+              parsed.message = `I've successfully locked ${university.name} as your chosen university. You can now proceed with your application preparation.`;
             }
           }
         }
