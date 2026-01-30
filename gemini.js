@@ -752,7 +752,7 @@ Now respond.
             }
           ],
           temperature: 0.3,
-          max_tokens: 1024,
+          max_tokens: 2048, // Increased from 1024
           top_p: 1,
           stop: null
         },
@@ -770,10 +770,12 @@ Now respond.
       }
 
       const content = response.data.choices[0].message.content.trim();
+      console.log("AI Response received:", content);
 
       // Parse AI response and add university IDs to college recommendations
       try {
         const parsedResponse = JSON.parse(content);
+        console.log("Successfully parsed AI response:", parsedResponse);
         
         // Add university IDs to college recommendations
         if (parsedResponse.collegeRecommendations && Array.isArray(parsedResponse.collegeRecommendations)) {
