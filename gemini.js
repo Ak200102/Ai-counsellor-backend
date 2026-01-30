@@ -187,6 +187,7 @@ When recommending universities, you MUST provide DIVERSE options based on:
 - Include mix of DREAM, TARGET, and SAFE universities
 - DO NOT always recommend MIT/Stanford/CMU - provide variety
 - Consider different universities for different profiles
+- ALWAYS recommend exactly 5 universities (2 DREAM, 2 TARGET, 1 SAFE)
 
 Examples of diverse universities to consider:
 - US: MIT, Stanford, Berkeley, CMU, UIUC, UW, Northeastern, Georgia Tech, UT Austin, Purdue
@@ -527,8 +528,8 @@ Example 3 - User with complete profile asks "recommend colleges":
   "collegeRecommendations": [
     {"name": "[Top University for Field]", "category": "DREAM"},
     {"name": "[Good Match University]", "category": "DREAM"},
-    {"name": "[Target University]", "category": "TARGET"},
-    {"name": "[Another Target University]", "category": "TARGET"},
+    {"name": "[Target University 1]", "category": "TARGET"},
+    {"name": "[Target University 2]", "category": "TARGET"},
     {"name": "[Safe Option University]", "category": "SAFE"}
   ],
   "action": "AUTO_SHORTLIST_MULTIPLE",
@@ -536,8 +537,8 @@ Example 3 - User with complete profile asks "recommend colleges":
   "autoShortlisted": [
     {"name": "[Top University for Field]", "category": "DREAM"},
     {"name": "[Good Match University]", "category": "DREAM"},
-    {"name": "[Target University]", "category": "TARGET"},
-    {"name": "[Another Target University]", "category": "TARGET"},
+    {"name": "[Target University 1]", "category": "TARGET"},
+    {"name": "[Target University 2]", "category": "TARGET"},
     {"name": "[Safe Option University]", "category": "SAFE"}
   ]
 }
@@ -548,6 +549,7 @@ IMPORTANT: Provide diverse university recommendations based on:
 - Mix of Dream, Target, and Safe universities
 - Include universities beyond just MIT/Stanford/CMU
 - Consider user's GPA and test scores for appropriate tiering
+- ALWAYS recommend exactly 5 universities (2 DREAM, 2 TARGET, 1 SAFE)
 
 Example 3 - User asks "create task":
 {
