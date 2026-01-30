@@ -181,6 +181,8 @@ const geminiResponse = async (context) => {
     try {
       const universityData = await University.find({}, 'name country ranking program _id');
       universities = universityData;
+      console.log("Fetched universities from database:", universities.length);
+      console.log("Sample universities:", universities.slice(0, 3).map(u => u.name));
     } catch (error) {
       console.error("Failed to fetch universities:", error);
     }
@@ -731,6 +733,10 @@ JSON Response Format:
 🚨 CRITICAL: Keep responses under 100 characters. Be direct and actionable.
 Now respond.
 `;
+
+    console.log("Sending prompt to AI with universities context...");
+    console.log("User message:", userMessage);
+    console.log("Universities in prompt:", universities.length);
 
     try {
       // Using Groq API - Free tier, no credits needed
