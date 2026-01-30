@@ -1,59 +1,22 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-let transporter = null;
-
-function initializeTransporter() {
-  if (transporter) return;
-  
-  console.log("📧 Initializing email service...");
-  console.log("📧 Gmail User:", process.env.GMAIL_USER);
-  console.log("📧 Gmail Password length:", process.env.GMAIL_PASSWORD?.length || 0);
-  console.log("📧 Gmail Password format:", process.env.GMAIL_PASSWORD?.includes(' ') ? "HAS SPACES" : "NO SPACES");
-  
-  try {
-    if (process.env.GMAIL_USER && process.env.GMAIL_PASSWORD) {
-      transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASSWORD,
-        },
-      });
-
-      // Verify connection
-      transporter.verify((error, success) => {
-        if (error) {
-          console.error("❌ Email verification failed:", error.message);
-          console.log("🔧 Error code:", error.code);
-          console.log("🔧 Common fixes:");
-          console.log("  1. Check app password format (no spaces)");
-          console.log("  2. Regenerate app password");
-          console.log("  3. Make sure 2FA is enabled");
-        } else {
-          console.log("✅ Email service ready");
-        }
-      });
-    } else {
-      console.error("❌ Gmail credentials missing");
-      console.error("  - GMAIL_USER:", !!process.env.GMAIL_USER);
-      console.error("  - GMAIL_PASSWORD:", !!process.env.GMAIL_PASSWORD);
-    }
-  } catch (error) {
-    console.error("❌ Email service initialization failed:", error.message);
-  }
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPEmail = async (email, otp, userName) => {
-  try {
-    initializeTransporter();
-    
-    if (!transporter) {
-      console.log("🔐 EMAIL FALLBACK - OTP:", otp);
-      return { success: true, message: "Email service not configured" };
-    }
+  console.log("� Using Resend email service...");
+  console.log("📧 RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
+  console.log("📧 FROM_EMAIL:", process.env.FROM_EMAIL);
+  console.log("📧 Sending OTP to:", email);
+  
+  // Fallback if API key missing
+  if (!process.env.RESEND_API_KEY) {
+    console.log("🔐 EMAIL FALLBACK - OTP:", otp);
+    return { success: true, message: "Email service not configured" };
+  }
 
-    const mailOptions = {
-      from: `"AI Counsellor" <${process.env.GMAIL_USER}>`,
+  try {
+    await resend.emails.send({
+      from: `AI Counsellor <${process.env.FROM_EMAIL}>`,
       to: email,
       subject: "Verify your AI Counsellor account",
       html: `
@@ -73,14 +36,13 @@ export const sendOTPEmail = async (email, otp, userName) => {
             </p>
           </div>
         </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log("✅ OTP email sent to:", email);
+      `
+    });
+    
+    console.log("✅ OTP email sent via Resend to:", email);
     return { success: true, message: "OTP sent to email" };
   } catch (error) {
-    console.error("❌ Email send failed:", error.message);
+    console.error("❌ Resend email send failed:", error.message);
     console.log("🔐 EMAIL FALLBACK - OTP:", otp);
     return { success: true, message: "Email failed, OTP logged" };
   }
