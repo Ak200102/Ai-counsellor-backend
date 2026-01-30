@@ -192,9 +192,30 @@ const geminiResponse = async (context) => {
         `\n────────────────────────────\n`
       : "";
 
+    // Build universities context for AI
+    const universitiesContext = universities.length > 0
+      ? `\n────────────────────────────\nAVAILABLE UNIVERSITIES IN DATABASE\n────────────────────────────\n` +
+        universities.map(uni => 
+          `- ${uni.name} (${uni.country || 'Location not specified'})${uni.ranking ? ` - Rank: ${uni.ranking}` : ''}${uni.program ? ` - Programs: ${uni.program}` : ''}`
+        ).join('\n') +
+        `\n────────────────────────────\n`
+      : "\nNo universities available in database.\n";
+
     const prompt = `
 🚨🚨🚨 CRITICAL: COMPLETE JSON ONLY - NO EXCEPTIONS 🚨🚨🚨
 YOU MUST respond with a SINGLE, COMPLETE, VALID JSON object.
+NEVER include incomplete fields like ,"profileAssessment":, ,"collegeRecommendations":, etc.
+ALL fields must have complete values or be empty arrays/null.
+Your ENTIRE response must be ONE JSON object from start to finish.
+NO text before or after the JSON object.
+NO incomplete JSON syntax.
+NO mixing natural language with JSON.
+
+EXAMPLE OF WRONG (NEVER DO THIS):
+❌ {"message": "Hello", ,"profileAssessment":, ,"collegeRecommendations":, ,"action": "CREATE_TASK", ,"task":,}
+
+EXAMPLE OF RIGHT (ALWAYS DO THIS):
+✅ {"message": "Hello", "profileAssessment": {"academics": "Average", "internships": "None", "readiness": "Medium"}, "collegeRecommendations": [], "action": "CREATE_TASK", "task": {"title": "Complete Profile", "reason": "Needed for recommendations"}} JSON object.
 NEVER include incomplete fields like ,"profileAssessment":, ,"collegeRecommendations":, etc.
 ALL fields must have complete values or be empty arrays/null.
 Your ENTIRE response must be ONE JSON object from start to finish.
@@ -428,15 +449,19 @@ Current Stage: ${userStage}
 Profile:
 ${JSON.stringify(profile, null, 2)}
 
+Universities Context:
+${JSON.stringify(universitiesContext, null, 2)}
+
 Shortlisted Universities:
 ${JSON.stringify(shortlistedUniversities, null, 2)}
 
 Locked University:
-${JSON.stringify(lockedUniversity, null, 2)}
+${lockedUniversity ? JSON.stringify(lockedUniversity, null, 2) : "None"}
 
-Student's Current Message:
-${userMessage}
+Conversation History:
+${conversationContext}
 
+User Message: "${userMessage}"
 ────────────────────────────
 COUNSELLOR RESPONSIBILITIES
 ────────────────────────────
