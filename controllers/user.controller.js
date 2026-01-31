@@ -292,25 +292,23 @@ export const updateUser = async (req, res) => {
     console.log('Request body keys:', Object.keys(req.body));
     console.log('Request body:', req.body);
     
+    // Handle both nested and flat data structures
     const { 
       name, 
       password, 
       bio,
-      // Academic Background (matching onboarding structure)
+      // Direct flat fields (legacy support)
       degree,
       subject,
       university,
       graduationYear,
       gpa,
-      // Study Goal (matching onboarding structure)
       intendedDegree,
       fieldOfStudy,
       intakeYear,
       preferredCountries,
-      // Budget (matching onboarding structure)
       budgetRange,
       fundingPlan,
-      // Standardized Tests (matching onboarding structure)
       ieltsTaken,
       ieltsScore,
       toeflTaken,
@@ -319,24 +317,28 @@ export const updateUser = async (req, res) => {
       greScore,
       gmatTaken,
       gmatScore,
-      // Additional Academic Info (matching onboarding structure)
       workExperience,
       researchExperience,
       publications,
       certifications,
-      // Application Readiness (matching onboarding structure)
       sopStatus,
       lorStatus,
-      resumeStatus
+      resumeStatus,
+      // Nested structure (new format)
+      academic,
+      studyGoal,
+      budget,
+      // Test scores in nested format
+      tests
     } = req.body;
     
     console.log('=== EXTRACTED FIELDS ===');
-    console.log('degree:', degree);
-    console.log('subject:', subject);
-    console.log('budgetRange:', budgetRange);
-    console.log('intendedDegree:', intendedDegree);
-    console.log('fieldOfStudy:', fieldOfStudy);
-    console.log('preferredCountries:', preferredCountries);
+    console.log('Nested academic:', academic);
+    console.log('Nested studyGoal:', studyGoal);
+    console.log('Nested budget:', budget);
+    console.log('Flat degree:', degree);
+    console.log('Flat subject:', subject);
+    console.log('Flat budgetRange:', budgetRange);
     
     // Find user
     const user = await User.findById(req.user._id);
@@ -362,29 +364,31 @@ export const updateUser = async (req, res) => {
       profile = new Profile({ userId: req.user._id });
     }
 
-    // Create profile data with nested structure to match database - HANDLE ALL FIELDS
+    // Create profile data - PREFER NESTED STRUCTURE, FALLBACK TO FLAT
     const profileData = {
-      // Academic Background - CONVERT FLAT TO NESTED
+      // Academic Background - USE NESTED OR FALLBACK TO FLAT
       academic: {
-        level: degree || profile.academic?.level || "",
-        major: subject || profile.academic?.major || "",
-        university: university || profile.academic?.university || "",
-        graduationYear: graduationYear || profile.academic?.graduationYear || null,
-        gpa: gpa || profile.academic?.gpa || ""
+        level: academic?.level || degree || profile.academic?.level || "",
+        major: academic?.major || subject || profile.academic?.major || "",
+        university: academic?.university || university || profile.academic?.university || "",
+        graduationYear: academic?.graduationYear || graduationYear || profile.academic?.graduationYear || null,
+        gpa: academic?.gpa || gpa || profile.academic?.gpa || ""
       },
-      // Study Goal - CONVERT FLAT TO NESTED
+      // Study Goal - USE NESTED OR FALLBACK TO FLAT
       studyGoal: {
-        degree: intendedDegree || profile.studyGoal?.degree || "",
-        field: fieldOfStudy || profile.studyGoal?.field || "",
-        intakeYear: intakeYear || profile.studyGoal?.intakeYear || null,
-        countries: Array.isArray(preferredCountries) ? preferredCountries : (profile.studyGoal?.countries || [])
+        degree: studyGoal?.degree || intendedDegree || profile.studyGoal?.degree || "",
+        field: studyGoal?.field || fieldOfStudy || profile.studyGoal?.field || "",
+        intakeYear: studyGoal?.intakeYear || intakeYear || profile.studyGoal?.intakeYear || null,
+        countries: Array.isArray(studyGoal?.countries) ? studyGoal.countries : 
+                 Array.isArray(preferredCountries) ? preferredCountries : 
+                 (profile.studyGoal?.countries || [])
       },
-      // Budget - CONVERT FLAT TO NESTED
+      // Budget - USE NESTED OR FALLBACK TO FLAT
       budget: {
-        range: budgetRange || profile.budget?.range || "",
-        funding: fundingPlan || profile.budget?.funding || ""
+        range: budget?.range || budgetRange || profile.budget?.range || "",
+        funding: budget?.funding || fundingPlan || profile.budget?.funding || ""
       },
-      // Standardized Tests - HANDLE ALL TEST FIELDS
+      // Standardized Tests - HANDLE BOTH FORMATS
       ieltsTaken: ieltsTaken !== undefined ? ieltsTaken : (profile.ieltsTaken || false),
       ieltsScore: ieltsScore ? {
         overall: ieltsScore || profile.ieltsScore?.overall || "",
@@ -399,26 +403,25 @@ export const updateUser = async (req, res) => {
         reading: profile.toeflScore?.reading || "",
         listening: profile.toeflScore?.listening || "",
         speaking: profile.toeflScore?.speaking || "",
-        writing: profile.toeflScore?.writing || ""
       } : profile.toeflScore || {},
       greTaken: greTaken !== undefined ? greTaken : (profile.greTaken || false),
       greScore: greScore ? {
         total: greScore || profile.greScore?.total || "",
-        verbal: profile.greScore?.verbal || "",
-        quantitative: profile.greScore?.quantitative || ""
+        verbal: greScore || profile.greScore?.verbal || "",
+        quantitative: greScore || profile.greScore?.quantitative || ""
       } : profile.greScore || {},
       gmatTaken: gmatTaken !== undefined ? gmatTaken : (profile.gmatTaken || false),
       gmatScore: gmatScore ? {
         total: gmatScore || profile.gmatScore?.total || "",
-        verbal: profile.gmatScore?.verbal || "",
-        quantitative: profile.gmatScore?.quantitative || ""
+        verbal: gmatScore || profile.gmatScore?.verbal || "",
+        quantitative: gmatScore || profile.gmatScore?.quantitative || ""
       } : profile.gmatScore || {},
-      // Additional Academic Info - HANDLE ALL EXPERIENCE FIELDS
+      // Additional Academic Info - HANDLE BOTH FORMATS
       workExperience: workExperience || profile.workExperience || "",
       researchExperience: researchExperience || profile.researchExperience || "",
       publications: publications || profile.publications || "",
       certifications: certifications || profile.certifications || "",
-      // Application Readiness - HANDLE ALL APPLICATION FIELDS
+      // Application Readiness - HANDLE BOTH FORMATS
       sopStatus: sopStatus || profile.sopStatus || "",
       lorStatus: lorStatus || profile.lorStatus || "",
       resumeStatus: resumeStatus || profile.resumeStatus || "",
@@ -494,10 +497,16 @@ export const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Update user error:", error);
+    console.error("Error name:", error.name);
+    console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
+    
+    // Send more specific error information
     res.status(500).json({ 
       message: "Failed to update profile",
-      error: error.message 
+      error: error.message,
+      errorName: error.name,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
