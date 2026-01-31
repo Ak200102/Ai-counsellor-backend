@@ -388,34 +388,59 @@ export const updateUser = async (req, res) => {
         range: budget?.range || budgetRange || profile.budget?.range || "",
         funding: budget?.funding || fundingPlan || profile.budget?.funding || ""
       },
-      // Standardized Tests - HANDLE BOTH FORMATS
+      // Standardized Tests - HANDLE BOTH FORMATS CORRECTLY
       ieltsTaken: ieltsTaken !== undefined ? ieltsTaken : (profile.ieltsTaken || false),
-      ieltsScore: ieltsScore ? {
-        overall: ieltsScore || profile.ieltsScore?.overall || "",
-        listening: profile.ieltsScore?.listening || "",
-        reading: profile.ieltsScore?.reading || "",
-        writing: profile.ieltsScore?.writing || "",
-        speaking: profile.ieltsScore?.speaking || ""
-      } : profile.ieltsScore || {},
+      ieltsScore: {
+        overall: (typeof ieltsScore === 'object' && ieltsScore?.overall) || 
+                (typeof ieltsScore === 'string' && ieltsScore) || 
+                profile.ieltsScore?.overall || "",
+        listening: (typeof ieltsScore === 'object' && ieltsScore?.listening) || 
+                   profile.ieltsScore?.listening || "",
+        reading: (typeof ieltsScore === 'object' && ieltsScore?.reading) || 
+                profile.ieltsScore?.reading || "",
+        writing: (typeof ieltsScore === 'object' && ieltsScore?.writing) || 
+                profile.ieltsScore?.writing || "",
+        speaking: (typeof ieltsScore === 'object' && ieltsScore?.speaking) || 
+                   profile.ieltsScore?.speaking || ""
+      },
       toeflTaken: toeflTaken !== undefined ? toeflTaken : (profile.toeflTaken || false),
-      toeflScore: toeflScore ? {
-        total: toeflScore || profile.toeflScore?.total || "",
-        reading: profile.toeflScore?.reading || "",
-        listening: profile.toeflScore?.listening || "",
-        speaking: profile.toeflScore?.speaking || "",
-      } : profile.toeflScore || {},
+      toeflScore: {
+        total: (typeof toeflScore === 'object' && toeflScore?.total) || 
+              (typeof toeflScore === 'string' && toeflScore) || 
+              profile.toeflScore?.total || "",
+        reading: (typeof toeflScore === 'object' && toeflScore?.reading) || 
+                profile.toeflScore?.reading || "",
+        listening: (typeof toeflScore === 'object' && toeflScore?.listening) || 
+                   profile.toeflScore?.listening || "",
+        speaking: (typeof toeflScore === 'object' && toeflScore?.speaking) || 
+                   profile.toeflScore?.speaking || "",
+        writing: (typeof toeflScore === 'object' && toeflScore?.writing) || 
+                profile.toeflScore?.writing || ""
+      },
       greTaken: greTaken !== undefined ? greTaken : (profile.greTaken || false),
-      greScore: greScore ? {
-        total: greScore || profile.greScore?.total || "",
-        verbal: greScore || profile.greScore?.verbal || "",
-        quantitative: greScore || profile.greScore?.quantitative || ""
-      } : profile.greScore || {},
+      greScore: {
+        total: (typeof greScore === 'object' && greScore?.total) || 
+              (typeof greScore === 'string' && greScore) || 
+              profile.greScore?.total || "",
+        verbal: (typeof greScore === 'object' && greScore?.verbal) || 
+                profile.greScore?.verbal || "",
+        quantitative: (typeof greScore === 'object' && greScore?.quantitative) || 
+                     profile.greScore?.quantitative || "",
+        analytical: (typeof greScore === 'object' && greScore?.analytical) || 
+                   profile.greScore?.analytical || ""
+      },
       gmatTaken: gmatTaken !== undefined ? gmatTaken : (profile.gmatTaken || false),
-      gmatScore: gmatScore ? {
-        total: gmatScore || profile.gmatScore?.total || "",
-        verbal: gmatScore || profile.gmatScore?.verbal || "",
-        quantitative: gmatScore || profile.gmatScore?.quantitative || ""
-      } : profile.gmatScore || {},
+      gmatScore: {
+        total: (typeof gmatScore === 'object' && gmatScore?.total) || 
+              (typeof gmatScore === 'string' && gmatScore) || 
+              profile.gmatScore?.total || "",
+        verbal: (typeof gmatScore === 'object' && gmatScore?.verbal) || 
+                profile.gmatScore?.verbal || "",
+        quantitative: (typeof gmatScore === 'object' && gmatScore?.quantitative) || 
+                     profile.gmatScore?.quantitative || "",
+        analytical: (typeof gmatScore === 'object' && gmatScore?.analytical) || 
+                   profile.gmatScore?.analytical || ""
+      },
       // Additional Academic Info - HANDLE BOTH FORMATS
       workExperience: workExperience || profile.workExperience || "",
       researchExperience: researchExperience || profile.researchExperience || "",
