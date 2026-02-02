@@ -34,49 +34,39 @@ const generateAITasks = async (userId, profile) => {
     console.log("User ID:", userId);
     console.log("Profile data:", JSON.stringify(profile, null, 2));
     
-    // Create a highly specific and intelligent prompt
-    const prompt = `You are an expert academic counsellor with 15+ years of experience helping students get into top universities worldwide.
+    // Create a shorter, more efficient prompt to avoid rate limits
+    const prompt = `As an expert academic counsellor, analyze this student's profile and generate 5-7 personalized tasks:
 
-STUDENT PROFILE ANALYSIS:
-${JSON.stringify(profile, null, 2)}
+PROFILE: ${JSON.stringify(profile, null, 2)}
 
-YOUR TASK:
-Generate exactly 5-7 HIGHLY PERSONALIZED tasks based on this specific student's profile. Each task must be:
-1. Specific to their academic background, goals, and current gaps
-2. Actionable with clear next steps
-3. Prioritized based on urgency and importance
-4. Relevant to their target countries and degree level
+TASKS NEEDED: Based on gaps in profile, target countries, degree level, and goals.
 
-RETURN FORMAT (strict JSON array):
+FORMAT (JSON array only):
 [
   {
-    "title": "Specific, personalized task title",
-    "description": "Detailed description with actionable steps tailored to this student",
-    "priority": "HIGH|MEDIUM|LOW",
+    "title": "Specific task title",
+    "description": "Actionable description",
+    "priority": "HIGH|MEDIUM|LOW", 
     "category": "PROFILE|EXAM|SOP|DOCUMENTS|APPLICATION",
-    "points": number (15-40 based on complexity),
+    "points": 15-40,
     "relatedStage": "BUILDING_PROFILE|PREPARING_APPLICATIONS",
-    "reason": "Specific reason why this task matters for THIS student"
+    "reason": "Why this matters for this student"
   }
 ]
 
-PERSONALIZATION RULES:
-- If targeting USA/Canada: Emphasize GRE/GMAT, English tests, research experience
-- If targeting UK/Australia: Focus on academic transcripts, English proficiency, personal statements
-- If GPA is low (<3.0): Include tasks to strengthen profile (research, certifications, work experience)
-- If no work experience: Suggest internships or research projects
-- If budget is limited: Include scholarship search tasks
-- If field is competitive (CS, Engineering): Emphasize projects and publications
-- If applying for Masters: Focus on research, SOP, LORs
-- If applying for PhD: Emphasize research experience, publications, contact with professors
+RULES:
+- USA/Canada: GRE/GMAT, English tests, research
+- UK/Australia: Transcripts, English, personal statements  
+- Low GPA: Research, certifications, work experience
+- No work experience: Internships, projects
+- Limited budget: Scholarships
+- Competitive fields: Projects, publications
+- Masters: Research, SOP, LORs
+- PhD: Research, publications, professor contact
 
-EXAMPLE PERSONALIZATION:
-- Student wants CS Masters in USA with 2.8 GPA → "Strengthen CS profile with machine learning project to offset GPA for US universities"
-- Student wants MBA in UK with no work experience → "Gain business analytics internship experience to meet MBA admission requirements"
+Return only JSON array.`;
 
-Generate ONLY the JSON array. No explanations, no markdown, just pure JSON.`;
-
-    console.log("Sending intelligent prompt to AI...");
+    console.log("Sending optimized prompt to AI...");
     
     // Get AI response with proper context format
     const aiResponse = await geminiResponse({
@@ -148,6 +138,13 @@ Generate ONLY the JSON array. No explanations, no markdown, just pure JSON.`;
 
   } catch (error) {
     console.error("❌ Error in AI task generation:", error);
+    
+    // Check if it's a rate limit error
+    if (error.message && error.message.includes('rate_limit_exceeded')) {
+      console.log("⏰ Rate limit hit, will retry on next request");
+      return [];
+    }
+    
     // Return empty to allow retry
     return [];
   }
