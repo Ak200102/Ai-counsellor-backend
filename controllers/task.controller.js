@@ -5,13 +5,26 @@ import geminiResponse from "../gemini.js";
 
 // Auto-generate tasks based on profile changes
 const autoGenerateTasks = async (userId, profile) => {
-  // Delete existing AI-generated tasks to avoid duplicates
-  await Task.deleteMany({ userId, createdBy: "AI" });
-  
-  // Generate new personalized tasks
-  await generateAITasks(userId, profile);
-  
-  console.log(`Auto-generated ${await Task.countDocuments({ userId, createdBy: "AI" })} tasks for user ${userId}`);
+  try {
+    console.log("=== AUTO GENERATE TASKS START ===");
+    console.log("User ID:", userId);
+    console.log("Profile exists:", !!profile);
+    
+    // Delete existing AI-generated tasks to avoid duplicates
+    const deleteResult = await Task.deleteMany({ userId, createdBy: "AI" });
+    console.log("Deleted existing AI tasks:", deleteResult.deletedCount);
+    
+    // Generate new personalized tasks
+    console.log("Starting AI task generation...");
+    await generateAITasks(userId, profile);
+    
+    const finalCount = await Task.countDocuments({ userId, createdBy: "AI" });
+    console.log(`Auto-generated ${finalCount} tasks for user ${userId}`);
+  } catch (error) {
+    console.error("Error in autoGenerateTasks:", error);
+    // Fallback to rule-based tasks
+    await generatePersonalizedTasks(userId, profile);
+  }
 };
 
 // Generate AI-powered intelligent tasks using Gemini AI
@@ -121,6 +134,10 @@ Generate only the JSON array, no additional text.`;
 
 // Generate personalized tasks based on user's profile
 const generatePersonalizedTasks = async (userId, profile) => {
+  console.log("=== RULE-BASED TASK GENERATION START ===");
+  console.log("User ID:", userId);
+  console.log("Profile data:", JSON.stringify(profile, null, 2));
+  
   const tasks = [];
   
   // Profile completion tasks based on missing information
@@ -318,30 +335,33 @@ const generatePersonalizedTasks = async (userId, profile) => {
   // Combine all tasks
   const allTasks = [...profileTasks, ...documentTasks, ...applicationTasks];
   
-  // Only create tasks if user doesn't have any
-  const existingTasks = await Task.find({ userId });
-  if (existingTasks.length === 0) {
-    if (allTasks.length > 0) {
-      await Task.insertMany(allTasks);
-    } else {
-      // Fallback to default tasks if no personalized tasks were generated
-      const fallbackTasks = [
-        {
-          userId,
-          title: "Complete Your Profile",
-          description: "Fill in your academic information, test scores, and preferences",
-          status: "NOT_STARTED",
-          priority: "HIGH",
-          category: "PROFILE",
-          points: 20,
-          relatedStage: "BUILDING_PROFILE",
-          createdBy: "AI",
-          reason: "A complete profile helps us provide better guidance"
-        }
-      ];
-      await Task.insertMany(fallbackTasks);
-    }
+  console.log("Generated rule-based tasks:", allTasks);
+  
+  // Always insert tasks (remove the existing tasks check)
+  if (allTasks.length > 0) {
+    await Task.insertMany(allTasks);
+    console.log(`Rule-based: Inserted ${allTasks.length} tasks for user ${userId}`);
+  } else {
+    // Fallback to default tasks if no personalized tasks were generated
+    const fallbackTasks = [
+      {
+        userId,
+        title: "Complete Your Profile",
+        description: "Fill in your academic information, test scores, and preferences",
+        status: "NOT_STARTED",
+        priority: "HIGH",
+        category: "PROFILE",
+        points: 20,
+        relatedStage: "BUILDING_PROFILE",
+        createdBy: "AI",
+        reason: "A complete profile helps us provide better guidance"
+      }
+    ];
+    await Task.insertMany(fallbackTasks);
+    console.log("Rule-based: Inserted fallback task");
   }
+  
+  return allTasks;
 };
 
 export const getTasks = async (req, res) => {
