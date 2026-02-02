@@ -34,37 +34,49 @@ const generateAITasks = async (userId, profile) => {
     console.log("User ID:", userId);
     console.log("Profile data:", JSON.stringify(profile, null, 2));
     
-    // Create a comprehensive prompt for the AI
-    const prompt = `As an expert academic counsellor, analyze this student's profile and generate 5-8 personalized tasks that will help them achieve their study abroad goals.
+    // Create a highly specific and intelligent prompt
+    const prompt = `You are an expert academic counsellor with 15+ years of experience helping students get into top universities worldwide.
 
-STUDENT PROFILE:
+STUDENT PROFILE ANALYSIS:
 ${JSON.stringify(profile, null, 2)}
 
-Based on this profile, generate tasks in JSON format like this:
+YOUR TASK:
+Generate exactly 5-7 HIGHLY PERSONALIZED tasks based on this specific student's profile. Each task must be:
+1. Specific to their academic background, goals, and current gaps
+2. Actionable with clear next steps
+3. Prioritized based on urgency and importance
+4. Relevant to their target countries and degree level
+
+RETURN FORMAT (strict JSON array):
 [
   {
-    "title": "Specific task title",
-    "description": "Detailed description with actionable steps",
+    "title": "Specific, personalized task title",
+    "description": "Detailed description with actionable steps tailored to this student",
     "priority": "HIGH|MEDIUM|LOW",
     "category": "PROFILE|EXAM|SOP|DOCUMENTS|APPLICATION",
-    "points": number,
+    "points": number (15-40 based on complexity),
     "relatedStage": "BUILDING_PROFILE|PREPARING_APPLICATIONS",
-    "reason": "Why this task is important for this specific student"
+    "reason": "Specific reason why this task matters for THIS student"
   }
 ]
 
-GUIDELINES:
-1. Tasks should be highly personalized to their profile
-2. Consider their target countries, degree, and field
-3. Address gaps in their profile (missing tests, documents, etc.)
-4. Prioritize tasks that are most urgent/important
-5. Include specific, actionable advice
-6. Consider their budget and funding preferences
-7. Make tasks realistic and achievable
+PERSONALIZATION RULES:
+- If targeting USA/Canada: Emphasize GRE/GMAT, English tests, research experience
+- If targeting UK/Australia: Focus on academic transcripts, English proficiency, personal statements
+- If GPA is low (<3.0): Include tasks to strengthen profile (research, certifications, work experience)
+- If no work experience: Suggest internships or research projects
+- If budget is limited: Include scholarship search tasks
+- If field is competitive (CS, Engineering): Emphasize projects and publications
+- If applying for Masters: Focus on research, SOP, LORs
+- If applying for PhD: Emphasize research experience, publications, contact with professors
 
-Generate only the JSON array, no additional text.`;
+EXAMPLE PERSONALIZATION:
+- Student wants CS Masters in USA with 2.8 GPA → "Strengthen CS profile with machine learning project to offset GPA for US universities"
+- Student wants MBA in UK with no work experience → "Gain business analytics internship experience to meet MBA admission requirements"
 
-    console.log("Sending prompt to AI...");
+Generate ONLY the JSON array. No explanations, no markdown, just pure JSON.`;
+
+    console.log("Sending intelligent prompt to AI...");
     
     // Get AI response with proper context format
     const aiResponse = await geminiResponse({
@@ -80,26 +92,36 @@ Generate only the JSON array, no additional text.`;
     
     console.log("AI Response received:", aiResponse);
     
-    // Parse the AI response
+    // Parse the AI response more robustly
     let aiTasks = [];
     try {
+      // Try to extract JSON from the response
       const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         aiTasks = JSON.parse(jsonMatch[0]);
-        console.log("Parsed AI tasks:", aiTasks);
+        console.log("Successfully parsed AI tasks:", aiTasks);
       } else {
-        console.log("No JSON array found in AI response");
+        console.log("No JSON array found in AI response, trying direct parse");
+        aiTasks = JSON.parse(aiResponse);
+        console.log("Direct parse successful:", aiTasks);
       }
     } catch (error) {
       console.error("Failed to parse AI tasks:", error);
-      console.log("AI Response:", aiResponse);
-      // Fallback to rule-based tasks
-      console.log("Falling back to rule-based tasks...");
-      return await generatePersonalizedTasks(userId, profile);
+      console.log("Raw AI Response:", aiResponse);
+      // Don't fall back to rule-based - return empty to try AI again
+      console.log("AI generation failed, will retry on next request");
+      return [];
     }
 
+    // Validate and clean AI tasks
+    const validTasks = aiTasks.filter(task => {
+      return task.title && task.description && task.priority && task.category;
+    });
+
+    console.log("Valid AI tasks:", validTasks.length);
+
     // Convert AI tasks to database format
-    const tasks = aiTasks.map(task => ({
+    const tasks = validTasks.map(task => ({
       userId,
       title: task.title || "AI Generated Task",
       description: task.description || "Personalized task generated by AI counsellor",
@@ -109,26 +131,25 @@ Generate only the JSON array, no additional text.`;
       points: task.points || 20,
       relatedStage: task.relatedStage || "BUILDING_PROFILE",
       createdBy: "AI",
-      reason: task.reason || "Intelligent task generated by AI counsellor based on your profile"
+      reason: task.reason || "Intelligent task generated by AI counsellor based on your profile analysis"
     }));
 
-    console.log("Formatted tasks for database:", tasks);
+    console.log("Formatted AI tasks for database:", tasks);
 
     // Insert AI-generated tasks
     if (tasks.length > 0) {
       await Task.insertMany(tasks);
-      console.log(`AI generated ${tasks.length} intelligent tasks for user ${userId}`);
+      console.log(`✅ AI successfully generated ${tasks.length} intelligent tasks for user ${userId}`);
+      return tasks;
     } else {
-      console.log("No tasks to insert, falling back...");
-      return await generatePersonalizedTasks(userId, profile);
+      console.log("❌ No valid AI tasks generated");
+      return [];
     }
 
-    return tasks;
   } catch (error) {
-    console.error("Error in AI task generation:", error);
-    // Fallback to rule-based tasks
-    console.log("Error fallback to rule-based tasks...");
-    return await generatePersonalizedTasks(userId, profile);
+    console.error("❌ Error in AI task generation:", error);
+    // Return empty to allow retry
+    return [];
   }
 };
 
@@ -373,19 +394,31 @@ export const getTasks = async (req, res) => {
     console.log("Existing tasks count:", existingTasks.length);
     
     if (existingTasks.length === 0) {
-      console.log("No existing tasks, generating new ones...");
+      console.log(" No existing tasks, generating AI-powered tasks...");
       const profile = await Profile.findOne({ userId });
       if (profile) {
-        await autoGenerateTasks(userId, profile);
+        console.log(" Profile found, generating intelligent tasks...");
+        const aiTasks = await generateAITasks(userId, profile);
+        
+        // Only fall back to rule-based if AI completely fails
+        if (aiTasks.length === 0) {
+          console.log(" AI generation failed, falling back to rule-based tasks...");
+          await autoGenerateTasks(userId, profile);
+        } else {
+          console.log(" AI generation successful!");
+        }
+      } else {
+        console.log(" No profile found, skipping task generation");
       }
     } else {
-      console.log("Tasks already exist, skipping generation");
+      console.log(" Tasks already exist, returning existing tasks");
     }
     
     const tasks = await Task.find({ userId }).sort({ createdAt: 1 });
+    console.log(` Returning ${tasks.length} tasks to frontend`);
     res.json(tasks);
   } catch (error) {
-    console.error("Error fetching tasks:", error);
+    console.error(" Error fetching tasks:", error);
     res.status(500).json({ message: "Failed to fetch tasks" });
   }
 };
