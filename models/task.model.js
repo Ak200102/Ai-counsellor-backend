@@ -41,6 +41,13 @@ const taskSchema = new mongoose.Schema(
       type: String,
       enum: ["AI", "USER"],
       default: "AI"
+    },
+    reason: String,
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
     }
   },
   { timestamps: true }

@@ -5,6 +5,7 @@ import bcryptjs from "bcryptjs";
 import path from "path";
 import fs from "fs";
 import { deleteFromCloudinary } from "../config/cloudinary.js";
+import { autoGenerateTasks } from "./task.controller.js";
 
 // Backend profile strength calculation
 const calculateProfileStrength = async (user) => {
@@ -147,6 +148,15 @@ export const completeOnboarding = async (req, res) => {
         stage: "BUILDING_PROFILE"
       }
     );
+
+    // Auto-generate tasks based on onboarding completion
+    try {
+      await autoGenerateTasks(req.user._id, result);
+      console.log("Tasks auto-generated based on onboarding completion");
+    } catch (taskError) {
+      console.error("Failed to auto-generate tasks during onboarding:", taskError);
+      // Don't fail onboarding if task generation fails
+    }
 
     res.json({ message: "Onboarding completed successfully", profile: result });
   } catch (error) {
@@ -512,6 +522,15 @@ export const updateUser = async (req, res) => {
     // Return user without password
     const userObject = user.toObject();
     delete userObject.password;
+
+    // Auto-generate tasks based on updated profile
+    try {
+      await autoGenerateTasks(req.user._id, profile);
+      console.log("Tasks auto-generated based on profile update");
+    } catch (taskError) {
+      console.error("Failed to auto-generate tasks:", taskError);
+      // Don't fail the profile update if task generation fails
+    }
 
     res.json({
       message: "Profile updated successfully",
