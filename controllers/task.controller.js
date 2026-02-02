@@ -384,7 +384,8 @@ export const getTasks = async (req, res) => {
 
 export const updateTaskStatus = async (req, res) => {
   try {
-    console.log("Updating task status for ID:", req.params.id);
+    console.log("=== UPDATING TASK STATUS ===");
+    console.log("Task ID:", req.params.id);
     console.log("Request body:", req.body);
     console.log("User ID:", req.user._id);
     
@@ -410,6 +411,8 @@ export const updateTaskStatus = async (req, res) => {
       return res.status(404).json({ message: "Task not found or access denied" });
     }
 
+    console.log("Current task status:", existingTask.status);
+
     const task = await Task.findByIdAndUpdate(
       req.params.id,
       { status, updatedAt: new Date() },
@@ -417,6 +420,7 @@ export const updateTaskStatus = async (req, res) => {
     );
 
     console.log("Task updated successfully:", task);
+    console.log("New status:", task.status);
     res.json(task);
   } catch (error) {
     console.error("Error updating task status:", error);
