@@ -615,8 +615,10 @@ export const aiCounsellor = async (req, res) => {
                   status: "NOT_STARTED",
                   priority: "HIGH",
                   category: "APPLICATION",
-                  relatedStage: user.stage,
-                  createdBy: "AI"
+                  points: 25,
+                  relatedStage: "PREPARING_APPLICATIONS",
+                  createdBy: "AI",
+                  reason: `AI created this task to help you evaluate your newly shortlisted universities: ${shortlistNames}`
                 });
                 console.log("Task object created:", newTask);
                 await newTask.save();
