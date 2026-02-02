@@ -368,10 +368,18 @@ export const getTasks = async (req, res) => {
   try {
     const userId = req.user._id;
     
-    // Get user profile to auto-generate personalized tasks
-    const profile = await Profile.findOne({ userId });
-    if (profile) {
-      await autoGenerateTasks(userId, profile);
+    // Get user profile to generate tasks only if user doesn't have any
+    const existingTasks = await Task.find({ userId });
+    console.log("Existing tasks count:", existingTasks.length);
+    
+    if (existingTasks.length === 0) {
+      console.log("No existing tasks, generating new ones...");
+      const profile = await Profile.findOne({ userId });
+      if (profile) {
+        await autoGenerateTasks(userId, profile);
+      }
+    } else {
+      console.log("Tasks already exist, skipping generation");
     }
     
     const tasks = await Task.find({ userId }).sort({ createdAt: 1 });
