@@ -392,9 +392,6 @@ const generatePersonalizedTasks = async (userId, profile) => {
       reason: "A complete profile helps us provide better guidance"
     }
   ];
-  await Task.insertMany(fallbackTasks);
-  console.log("Rule-based: Inserted fallback task");
-  return fallbackTasks;
 };
 
 export const getTasks = async (req, res) => {
@@ -425,7 +422,23 @@ export const getTasks = async (req, res) => {
         await generatePersonalizedTasks(userId, {});
       }
     } else {
-      console.log(" Tasks already exist, returning existing tasks");
+      console.log(" Tasks already exist, checking if AI tasks are present...");
+      const aiTasks = existingTasks.filter(task => task.createdBy === "AI");
+      console.log(`Found ${aiTasks.length} AI tasks out of ${existingTasks.length} total tasks`);
+      
+      // If no AI tasks exist, try to generate them
+      if (aiTasks.length === 0) {
+        console.log(" No AI tasks found, attempting to generate AI tasks...");
+        const profile = await Profile.findOne({ userId });
+        if (profile) {
+          const newAiTasks = await generateAITasks(userId, profile);
+          if (newAiTasks.length > 0) {
+            console.log(" AI tasks generated successfully!");
+          } else {
+            console.log(" AI generation failed, keeping existing tasks");
+          }
+        }
+      }
     }
     
     const tasks = await Task.find({ userId }).sort({ createdAt: 1 });
@@ -516,17 +529,31 @@ export const createTask = async (req, res) => {
 export const regenerateTasks = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log("=== MANUALLY REGENERATING TASKS ===");
     
     // Delete existing AI-generated tasks
-    await Task.deleteMany({ userId, createdBy: "AI" });
+    const deleteResult = await Task.deleteMany({ userId, createdBy: "AI" });
+    console.log(`Deleted ${deleteResult.deletedCount} existing AI tasks`);
     
     // Get updated profile and generate AI tasks
     const profile = await Profile.findOne({ userId });
     if (profile) {
-      await generateAITasks(userId, profile);
+      console.log("Profile found, generating new AI tasks...");
+      const aiTasks = await generateAITasks(userId, profile);
+      
+      if (aiTasks.length === 0) {
+        console.log("AI generation failed, falling back to rule-based tasks...");
+        await generatePersonalizedTasks(userId, profile);
+      } else {
+        console.log(`Successfully generated ${aiTasks.length} AI tasks`);
+      }
+    } else {
+      console.log("No profile found, creating default tasks...");
+      await generatePersonalizedTasks(userId, {});
     }
     
     const tasks = await Task.find({ userId }).sort({ createdAt: 1 });
+    console.log(`Returning ${tasks.length} tasks after regeneration`);
     res.json(tasks);
   } catch (error) {
     console.error("Error regenerating tasks:", error);
