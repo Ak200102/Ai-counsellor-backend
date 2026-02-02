@@ -355,3 +355,6 @@ export const completeTask = async (req, res) => {
   });
   res.json({ message: "Task completed" });
 };
+
+// Export autoGenerateTasks for use in other controllers
+export { autoGenerateTasks };
